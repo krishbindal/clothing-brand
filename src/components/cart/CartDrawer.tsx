@@ -45,11 +45,150 @@ const CART_RECOMMENDATIONS: Product[] = [
   },
 ]
 
+const FREE_SHIPPING_THRESHOLD = 150
+
+interface CartLineItemProps {
+  item: ReturnType<typeof useCart>['items'][number]
+  onUpdateQuantity: (id: string, quantity: number) => void
+  onRemove: (id: string) => void
+}
+
+function CartLineItem({ item, onUpdateQuantity, onRemove }: CartLineItemProps) {
+  const handleDecrease = () => {
+    const nextQty = Math.max(1, item.quantity - 1)
+    onUpdateQuantity(item.id, nextQty)
+  }
+
+  const handleIncrease = () => {
+    const nextQty = item.quantity + 1
+    onUpdateQuantity(item.id, nextQty)
+  }
+
+  return (
+    <motion.div
+      key={item.id}
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 80, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="flex gap-4 py-4 border-b border-brand-border/30 last:border-0 group"
+    >
+      <div className="relative w-20 h-[100px] rounded-lg overflow-hidden bg-brand-card flex-shrink-0">
+        {item.product.images?.[0]?.url ? (
+          <Image
+            src={item.product.images[0].url}
+            alt={item.product.images[0].alt || item.product.name}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
+            <span className="text-xs font-display gold-text opacity-30 tracking-widest">LUXE</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-sm text-brand-white truncate">{item.product.name}</h3>
+        <p className="text-xs text-brand-gray-500 mt-0.5">
+          {item.size} · {item.color}
+        </p>
+        <p className="text-brand-gold font-semibold text-sm mt-1.5">
+          {formatPrice(item.product.price * item.quantity)}
+        </p>
+
+        <div className="flex items-center justify-between mt-2.5">
+          <div className="flex items-center border border-brand-border/60 rounded-md overflow-hidden">
+            <button
+              onClick={handleDecrease}
+              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:bg-brand-card transition-all duration-200"
+              aria-label="Decrease quantity"
+            >
+              <Minus size={12} />
+            </button>
+            <span className="text-xs w-7 text-center font-medium">{item.quantity}</span>
+            <button
+              onClick={handleIncrease}
+              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:bg-brand-card transition-all duration-200"
+              aria-label="Increase quantity"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+          <button
+            onClick={() => onRemove(item.id)}
+            className="p-1.5 text-brand-gray-600 hover:text-red-400 transition-colors duration-300 opacity-0 group-hover:opacity-100"
+            aria-label="Remove item"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function CartEmptyState({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-5 text-center">
+      <div className="w-16 h-16 rounded-full bg-brand-card flex items-center justify-center">
+        <ShoppingBag size={24} className="text-brand-gray-600" />
+      </div>
+      <div>
+        <p className="text-brand-gray-300 font-medium">Your cart is empty</p>
+        <p className="text-brand-gray-600 text-sm mt-1">Add something to get started</p>
+      </div>
+      <button onClick={onClose} className="btn-primary mt-2">
+        Continue Shopping
+      </button>
+    </div>
+  )
+}
+
+function CartRecommendations({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="space-y-2.5">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-brand-gray-500 font-semibold">
+        Complete the look
+      </p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {CART_RECOMMENDATIONS.map((product) => (
+          <Link
+            key={product.id}
+            href={`/products/${product.slug}`}
+            onClick={onClose}
+            className="rounded-lg border border-brand-border/40 bg-brand-card/60 p-2.5 hover:border-brand-gold/40 transition-all duration-400 group/rec"
+          >
+            <div className="relative w-full h-14 rounded bg-gradient-to-br from-brand-muted to-brand-dark overflow-hidden flex items-center justify-center">
+              {product.images[0]?.url ? (
+                <Image
+                  src={product.images[0].url}
+                  alt={product.images[0].alt}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <span className="text-[10px] font-display gold-text opacity-20 tracking-widest">
+                  LUXE
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-brand-white mt-2 truncate group-hover/rec:text-brand-gold transition-colors duration-300">
+              {product.name}
+            </p>
+            <p className="text-xs text-brand-gold/80 font-medium">{formatPrice(product.price)}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, subtotal } = useCart()
-  const shippingThreshold = 150
-  const remaining = Math.max(0, shippingThreshold - subtotal)
-  const progress = Math.min((subtotal / shippingThreshold) * 100, 100)
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
+  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const freeShipping = remaining <= 0
 
   return (
@@ -118,83 +257,16 @@ export default function CartDrawer() {
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-0">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-5 text-center">
-                  <div className="w-16 h-16 rounded-full bg-brand-card flex items-center justify-center">
-                    <ShoppingBag size={24} className="text-brand-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-brand-gray-300 font-medium">Your cart is empty</p>
-                    <p className="text-brand-gray-600 text-sm mt-1">
-                      Add something to get started
-                    </p>
-                  </div>
-                  <button onClick={closeCart} className="btn-primary mt-2">
-                    Continue Shopping
-                  </button>
-                </div>
+                <CartEmptyState onClose={closeCart} />
               ) : (
                 <AnimatePresence mode="popLayout">
                   {items.map((item) => (
-                    <motion.div
+                    <CartLineItem
                       key={item.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 80, transition: { duration: 0.25 } }}
-                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex gap-4 py-4 border-b border-brand-border/30 last:border-0 group"
-                    >
-                      {/* Image */}
-                      <div className="relative w-20 h-[100px] rounded-lg overflow-hidden bg-brand-card flex-shrink-0">
-                        {item.product.images?.[0]?.url ? (
-                          <Image
-                            src={item.product.images[0].url}
-                            alt={item.product.images[0].alt || item.product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
-                            <span className="text-xs font-display gold-text opacity-30 tracking-widest">LUXE</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm text-brand-white truncate">{item.product.name}</h3>
-                        <p className="text-xs text-brand-gray-500 mt-0.5">
-                          {item.size} · {item.color}
-                        </p>
-                        <p className="text-brand-gold font-semibold text-sm mt-1.5">
-                          {formatPrice(item.product.price * item.quantity)}
-                        </p>
-
-                        <div className="flex items-center justify-between mt-2.5">
-                          <div className="flex items-center border border-brand-border/60 rounded-md overflow-hidden">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:bg-brand-card transition-all duration-200"
-                            >
-                              <Minus size={12} />
-                            </button>
-                            <span className="text-xs w-7 text-center font-medium">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:bg-brand-card transition-all duration-200"
-                            >
-                              <Plus size={12} />
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="p-1.5 text-brand-gray-600 hover:text-red-400 transition-colors duration-300 opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
+                      item={item}
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeItem}
+                    />
                   ))}
                 </AnimatePresence>
               )}
@@ -203,39 +275,7 @@ export default function CartDrawer() {
             {/* Footer */}
             {items.length > 0 && (
               <div className="px-6 py-5 border-t border-brand-border/50 space-y-4 bg-gradient-to-t from-brand-dark to-brand-dark/80">
-                {/* Complete the look */}
-                <div className="space-y-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-brand-gray-500 font-semibold">
-                    Complete the look
-                  </p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {CART_RECOMMENDATIONS.map((product) => (
-                      <Link
-                        key={product.id}
-                        href={`/products/${product.slug}`}
-                        onClick={closeCart}
-                        className="rounded-lg border border-brand-border/40 bg-brand-card/60 p-2.5 hover:border-brand-gold/40 transition-all duration-400 group/rec"
-                      >
-                        <div className="relative w-full h-14 rounded bg-gradient-to-br from-brand-muted to-brand-dark overflow-hidden flex items-center justify-center">
-                          {product.images[0]?.url ? (
-                            <Image
-                              src={product.images[0].url}
-                              alt={product.images[0].alt}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-display gold-text opacity-20 tracking-widest">LUXE</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-brand-white mt-2 truncate group-hover/rec:text-brand-gold transition-colors duration-300">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-brand-gold/80 font-medium">{formatPrice(product.price)}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                <CartRecommendations onClose={closeCart} />
 
                 {/* Subtotal */}
                 <div className="flex justify-between items-center pt-2">
