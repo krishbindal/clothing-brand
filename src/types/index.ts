@@ -58,15 +58,19 @@ export interface Cart {
 
 export interface Order {
   id: string
-  userId: string
+  userId?: string | null
+  guestEmail?: string | null
   items: OrderItem[]
   subtotal: number
   tax: number
   shipping: number
+  discountAmount?: number
   total: number
   status: OrderStatus
   shippingAddress: Address
   paymentIntentId?: string
+  discountCodeId?: string | null
+  discountCode?: DiscountCode | null
   createdAt: string
   updatedAt: string
 }
@@ -83,12 +87,12 @@ export interface OrderItem {
 }
 
 export type OrderStatus =
-  | 'pending'
-  | 'processing'
-  | 'shipped'
-  | 'delivered'
-  | 'cancelled'
-  | 'refunded'
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'REFUNDED'
 
 export interface Address {
   id?: string
@@ -114,7 +118,7 @@ export interface User {
   createdAt: string
 }
 
-export type UserRole = 'customer' | 'admin'
+export type UserRole = 'CUSTOMER' | 'ADMIN'
 
 export interface WishlistItem {
   id: string
@@ -179,9 +183,37 @@ export interface SizeRecommendation {
 
 export interface CheckoutFormData {
   email: string
-  firstName: string
-  lastName: string
-  address: Address
+  shippingAddress: Address
   saveAddress: boolean
-  paymentMethodId?: string
+}
+
+export type DiscountType = 'PERCENTAGE' | 'FIXED'
+
+export interface DiscountCode {
+  id: string
+  code: string
+  description?: string
+  type: DiscountType
+  value: number
+  active: boolean
+  usageLimit?: number | null
+  usedCount: number
+  startsAt?: string | null
+  expiresAt?: string | null
+  minimumSubtotal?: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type AnalyticsEventType = 'PAGE_VIEW' | 'PRODUCT_CLICK' | 'ADD_TO_CART'
+
+export interface AnalyticsEvent {
+  id: string
+  userId?: string | null
+  sessionId: string
+  type: AnalyticsEventType
+  path: string
+  productId?: string | null
+  metadata?: Record<string, unknown>
+  createdAt: string
 }

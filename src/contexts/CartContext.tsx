@@ -10,6 +10,7 @@ import React, {
 } from 'react'
 import { CartItem, Product } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
+import { logEvent } from '@/lib/analytics'
 
 interface CartState {
   items: CartItem[]
@@ -160,6 +161,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (product: Product, quantity: number, size: string, color: string) => {
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity, size, color } })
     dispatch({ type: 'OPEN_CART' })
+    logEvent('ADD_TO_CART', {
+      path: typeof window !== 'undefined' ? window.location.pathname : '/',
+      productId: product.id,
+      metadata: { quantity, size, color, price: product.price },
+      userId: user?.uid,
+    }).catch(() => null)
   }
 
   const removeItem = (id: string) => dispatch({ type: 'REMOVE_ITEM', payload: { id } })
