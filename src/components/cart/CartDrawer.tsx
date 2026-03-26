@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { X, Minus, Plus, ShoppingBag, Trash2, ShieldCheck, RotateCcw, Truck, Check } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
+import { useWishlist } from '@/contexts/WishlistContext'
 import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
 
@@ -52,10 +53,11 @@ interface CartLineItemProps {
   item: ReturnType<typeof useCart>['items'][number]
   onUpdateQuantity: (id: string, quantity: number) => void
   onRemove: (id: string) => void
+  onSaveForLater: (product: Product) => void
   highlight?: boolean
 }
 
-function CartLineItem({ item, onUpdateQuantity, onRemove, highlight = false }: CartLineItemProps) {
+function CartLineItem({ item, onUpdateQuantity, onRemove, onSaveForLater, highlight = false }: CartLineItemProps) {
   const handleDecrease = () => {
     const nextQty = Math.max(1, item.quantity - 1)
     onUpdateQuantity(item.id, nextQty)
@@ -122,13 +124,21 @@ function CartLineItem({ item, onUpdateQuantity, onRemove, highlight = false }: C
               <Plus size={12} />
             </button>
           </div>
-          <button
-            onClick={() => onRemove(item.id)}
-            className="p-1.5 text-brand-gray-600 hover:text-red-400 transition-colors duration-300 opacity-0 group-hover:opacity-100"
-            aria-label="Remove item"
-          >
-            <Trash2 size={13} />
-          </button>
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onSaveForLater(item.product)}
+              className="text-[11px] uppercase tracking-[0.2em] text-brand-gray-500 hover:text-brand-gold"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => onRemove(item.id)}
+              className="p-1.5 text-brand-gray-600 hover:text-red-400 transition-colors duration-300"
+              aria-label="Remove item"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -162,6 +172,7 @@ function CartRecommendations({ onClose }: { onClose: () => void }) {
         {CART_RECOMMENDATIONS.map((product) => (
           <Link
             key={product.id}
+            prefetch
             href={`/products/${product.slug}`}
             onClick={onClose}
             className="rounded-lg border border-brand-border/40 bg-brand-card/60 p-2.5 hover:border-brand-gold/40 transition-all duration-400 group/rec"
@@ -193,12 +204,14 @@ function CartRecommendations({ onClose }: { onClose: () => void }) {
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, subtotal } = useCart()
+  const { toggleWishlist } = useWishlist()
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
   const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const freeShipping = remaining <= 0
   const [justAddedId, setJustAddedId] = useState<string | null>(null)
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousIdsRef = useRef<string[]>([])
+  const [savedForLater, setSavedForLater] = useState<string | null>(null)
 
   const estimatedDelivery = useMemo(() => {
     const format = (offset: number) => {
@@ -230,6 +243,16 @@ export default function CartDrawer() {
     },
     []
   )
+
+  const handleSaveForLater = async (product: Product) => {
+    await toggleWishlist(product)
+    const itemToRemove = items.find((item) => item.product.id === product.id)
+    if (itemToRemove) {
+      removeItem(itemToRemove.id)
+    }
+    setSavedForLater(product.name)
+    setTimeout(() => setSavedForLater(null), 1800)
+  }
 
   return (
     <AnimatePresence>
@@ -307,6 +330,17 @@ export default function CartDrawer() {
                   Added to your cart
                 </motion.div>
               )}
+              {savedForLater && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="mx-6 mt-2 flex items-center gap-2 rounded-lg border border-brand-border/50 bg-brand-card px-4 py-3 text-sm text-brand-gray-200"
+                >
+                  Saved “{savedForLater}” to your wishlist
+                </motion.div>
+              )}
             </AnimatePresence>
 
             {/* Items */}
@@ -321,6 +355,7 @@ export default function CartDrawer() {
                       item={item}
                       onUpdateQuantity={updateQuantity}
                       onRemove={removeItem}
+                      onSaveForLater={handleSaveForLater}
                       highlight={justAddedId === item.id}
                     />
                   ))}
