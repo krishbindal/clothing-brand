@@ -20,6 +20,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [hoveredImage, setHoveredImage] = useState(0)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
+  const [selectedColorName, setSelectedColorName] = useState(product.colors?.[0]?.name || 'Default')
+  const [addedFeedback, setAddedFeedback] = useState(false)
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
 
@@ -27,14 +29,19 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const discountPct = product.comparePrice
     ? getDiscountPercentage(product.price, product.comparePrice)
     : 0
+  const savings = product.comparePrice ? product.comparePrice - product.price : 0
 
   const handleQuickAdd = () => {
     if (!selectedSize) return
-    const defaultColor = product.colors?.[0]?.name || 'Default'
-    addItem(product, 1, selectedSize, defaultColor)
+    addItem(product, 1, selectedSize, selectedColorName)
+    setAddedFeedback(true)
+    setTimeout(() => setAddedFeedback(false), 1500)
     setQuickAddOpen(false)
     setSelectedSize('')
   }
+
+  const selectedSizeData = product.sizes?.find((size) => size.label === selectedSize)
+  const lowStock = selectedSizeData?.stockCount && selectedSizeData.stockCount <= 3
 
   return (
     <motion.div
@@ -90,6 +97,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               -{discountPct}%
             </span>
           )}
+          {savings > 0 && (
+            <span className="bg-brand-gold/95 text-brand-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+              Save ${savings}
+            </span>
+          )}
           {!product.inStock && (
             <span className="bg-brand-muted text-brand-gray-400 text-xs font-medium px-2 py-0.5 rounded uppercase">
               Sold Out
@@ -107,6 +119,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               : 'bg-brand-black/50 text-brand-gray-400 opacity-0 group-hover:opacity-100 hover:text-brand-white'
           )}
           whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.08 }}
         >
           <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
         </motion.button>
@@ -140,6 +153,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                     </button>
                   ))}
                 </div>
+                {lowStock && (
+                  <p className="text-[10px] text-amber-300 uppercase tracking-wide mb-2">
+                    Only {selectedSizeData.stockCount} left in {selectedSize}
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <button
                     onClick={handleQuickAdd}
@@ -183,6 +201,27 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
       {/* Product Info */}
       <div className="mt-3 px-1">
+        {product.colors && product.colors.length > 1 && (
+          <div className="flex items-center gap-2 mb-2">
+            {product.colors.slice(0, 4).map((color) => (
+              <button
+                key={color.name}
+                onClick={(e) => {
+                  e.preventDefault()
+                  setSelectedColorName(color.name)
+                }}
+                title={color.name}
+                className={cn(
+                  'w-3.5 h-3.5 rounded-full border transition-transform',
+                  selectedColorName === color.name
+                    ? 'border-brand-gold scale-110'
+                    : 'border-brand-border hover:border-brand-gray-400'
+                )}
+                style={{ backgroundColor: color.hex }}
+              />
+            ))}
+          </div>
+        )}
         <Link href={`/products/${product.slug}`}>
           <h3 className="text-sm font-medium text-brand-white hover:text-brand-gold transition-colors duration-200 truncate">
             {product.name}
@@ -195,6 +234,9 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             <span className="text-xs text-brand-gray-500 line-through">{formatPrice(product.comparePrice)}</span>
           )}
         </div>
+        {addedFeedback && (
+          <p className="text-[11px] text-green-400 mt-1 uppercase tracking-wide">Added to cart</p>
+        )}
       </div>
     </motion.div>
   )

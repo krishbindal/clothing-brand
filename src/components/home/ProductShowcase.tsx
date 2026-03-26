@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
 import { Product } from '@/types'
@@ -110,7 +110,24 @@ const sampleProducts: Product[] = [
 const tabs = ['All', 'New Arrivals', 'Bestsellers', 'Sale']
 
 export default function ProductShowcase() {
-  const [activeTab, setActiveTab] = useState('All')
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === 'undefined') return 'All'
+    const stored = localStorage.getItem('featured-tab')
+    return stored && tabs.includes(stored) ? stored : 'All'
+  })
+
+  const filteredProducts = useMemo(() => {
+    switch (activeTab) {
+      case 'New Arrivals':
+        return sampleProducts.filter((p) => p.tags.includes('new'))
+      case 'Bestsellers':
+        return sampleProducts.filter((p) => p.tags.includes('bestseller'))
+      case 'Sale':
+        return sampleProducts.filter((p) => Boolean(p.comparePrice))
+      default:
+        return sampleProducts
+    }
+  }, [activeTab])
 
   return (
     <section className="section-padding bg-brand-black">
@@ -131,7 +148,10 @@ export default function ProductShowcase() {
             {tabs.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab)
+                  localStorage.setItem('featured-tab', tab)
+                }}
                 className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ${
                   activeTab === tab
                     ? 'bg-brand-gold text-brand-black'
@@ -144,11 +164,20 @@ export default function ProductShowcase() {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {sampleProducts.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 2} />
-          ))}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+          >
+            {filteredProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} priority={i < 2} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0 }}
