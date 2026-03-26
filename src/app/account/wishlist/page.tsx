@@ -1,14 +1,18 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Heart, Trash2 } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import ProductCard from '@/components/shop/ProductCard'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { useProducts } from '@/hooks'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function WishlistPage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist()
   const { products, isLoading: productsLoading, error, refetch } = useProducts({
     enabled: wishlistIds.length > 0,
@@ -19,7 +23,29 @@ export default function WishlistPage() {
     [products, wishlistIds],
   )
 
-  const loading = wishlistLoading || (wishlistIds.length > 0 && productsLoading)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login?callbackUrl=/account/wishlist')
+    }
+  }, [authLoading, router, user])
+
+  const loading = authLoading || wishlistLoading || (wishlistIds.length > 0 && productsLoading)
+
+  if (!authLoading && !user) {
+    return (
+      <main className="min-h-screen bg-brand-black pt-28 pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <EmptyState
+            icon={Heart}
+            title="Sign in to view wishlist"
+            description="Create an account or sign in to see your saved items."
+            actionLabel="Go to Login"
+            actionHref="/login?callbackUrl=/account/wishlist"
+          />
+        </div>
+      </main>
+    )
+  }
 
   if (loading) {
     return (

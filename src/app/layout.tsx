@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { CartProvider } from '@/contexts/CartContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
-import { SessionProvider } from '@/components/providers/SessionProvider'
+import { AuthProvider } from '@/components/providers/AuthProvider'
 import LenisProvider from '@/components/providers/LenisProvider'
 import Navbar from '@/components/layout/Navbar'
 import CartDrawer from '@/components/cart/CartDrawer'
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="font-sans bg-brand-black text-brand-white antialiased" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
-        <SessionProvider>
+        <AuthProvider>
           <CartProvider>
             <WishlistProvider>
               <LenisProvider>
@@ -55,7 +55,7 @@ export default function RootLayout({
               </LenisProvider>
             </WishlistProvider>
           </CartProvider>
-        </SessionProvider>
+        </AuthProvider>
       </body>
     </html>
   )

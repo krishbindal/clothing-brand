@@ -1,8 +1,16 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useSession } from 'next-auth/react'
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+  startTransition,
+} from 'react'
 import { Product } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface WishlistContextType {
   wishlistIds: string[]
@@ -13,72 +21,62 @@ interface WishlistContextType {
 
 const WishlistContext = createContext<WishlistContextType | null>(null)
 
-const readLocalWishlist = (): string[] => {
-  if (typeof window === 'undefined') return []
-  const stored = localStorage.getItem('wishlist')
-  if (!stored) return []
-  try {
-    return JSON.parse(stored) as string[]
-  } catch {
-    return []
-  }
-}
-
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const { data: session } = useSession()
-  const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-    return readLocalWishlist()
-  })
+  const { user } = useAuth()
+  const storageKey = useMemo(
+    () => (user ? `wishlist:${user.uid}` : 'wishlist:guest'),
+    [user],
+  )
+  const [wishlistIds, setWishlistIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (session?.user?.id) {
-      void fetch('/api/wishlist')
-        .then(async (response) => {
-          if (!response.ok) return []
-          const data = (await response.json()) as { productId: string }[]
-          return data.map((item) => item.productId)
-        })
-        .then((ids) => setWishlistIds(ids))
-        .catch(() => {
-          // Silently fail
-        })
-    } else {
-      const localIds = readLocalWishlist()
-      const timeout = window.setTimeout(() => setWishlistIds(localIds), 0)
-      return () => window.clearTimeout(timeout)
+    if (typeof window === 'undefined') return
+
+    const stored = localStorage.getItem(storageKey)
+    const guestStored = user ? localStorage.getItem('wishlist:guest') : null
+    const legacyStored = !stored ? localStorage.getItem('wishlist') : null
+
+    try {
+      if (stored) {
+        startTransition(() => setWishlistIds(JSON.parse(stored) as string[]))
+        return
+      }
+
+      if (guestStored && user) {
+        const migrated = JSON.parse(guestStored) as string[]
+        startTransition(() => setWishlistIds(migrated))
+        localStorage.setItem(storageKey, JSON.stringify(migrated))
+        localStorage.removeItem('wishlist:guest')
+        return
+      }
+
+      if (legacyStored) {
+        const migrated = JSON.parse(legacyStored) as string[]
+        startTransition(() => setWishlistIds(migrated))
+        localStorage.setItem(storageKey, JSON.stringify(migrated))
+        localStorage.removeItem('wishlist')
+        return
+      }
+    } catch {
+      localStorage.removeItem(storageKey)
     }
-  }, [session])
+
+    startTransition(() => setWishlistIds([]))
+  }, [storageKey, user])
 
   const isInWishlist = (productId: string) => wishlistIds.includes(productId)
 
   const toggleWishlist = async (product: Product) => {
     setIsLoading(true)
     const isAdding = !wishlistIds.includes(product.id)
+    const next = isAdding
+      ? [...wishlistIds, product.id]
+      : wishlistIds.filter((id) => id !== product.id)
 
-    if (session?.user?.id) {
-      try {
-        const response = await fetch('/api/wishlist', {
-          method: isAdding ? 'POST' : 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id }),
-        })
-
-        if (response.ok) {
-          setWishlistIds((prev) =>
-            isAdding ? [...prev, product.id] : prev.filter((id) => id !== product.id)
-          )
-        }
-      } catch {
-        // Handle error silently
-      }
-    } else {
-      const newIds = isAdding
-        ? [...wishlistIds, product.id]
-        : wishlistIds.filter((id) => id !== product.id)
-      setWishlistIds(newIds)
-      localStorage.setItem('wishlist', JSON.stringify(newIds))
+    setWishlistIds(next)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, JSON.stringify(next))
     }
 
     setIsLoading(false)
