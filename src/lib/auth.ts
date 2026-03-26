@@ -3,11 +3,11 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 import { loginSchema } from '@/lib/validations/auth'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(getPrisma()),
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data
 
-        const user = await prisma.user.findUnique({
+        const user = await getPrisma().user.findUnique({
           where: { email: email.toLowerCase() },
         })
 
@@ -77,7 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       // Update emailVerified for OAuth sign-ins
       if (account?.provider === 'google' && user.email) {
-        await prisma.user
+        await getPrisma().user
           .update({
             where: { email: user.email },
             data: { emailVerified: new Date() },
