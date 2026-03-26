@@ -7,109 +7,13 @@ import { ArrowRight } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
 import { Product } from '@/types'
 
-const sampleProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Obsidian Oversized Tee',
-    slug: 'obsidian-oversized-tee',
-    description: 'Premium heavyweight cotton in obsidian black.',
-    price: 89,
-    comparePrice: 120,
-    images: [{ url: '/images/product-1.jpg', alt: 'Obsidian Tee', width: 800, height: 1000 }],
-    category: 'tops',
-    sizes: [
-      { label: 'XS', available: true },
-      { label: 'S', available: true },
-      { label: 'M', available: true },
-      { label: 'L', available: true },
-      { label: 'XL', available: false },
-    ],
-    colors: [{ name: 'Obsidian', hex: '#0A0A0A', available: true }],
-    materials: ['100% Heavyweight Cotton'],
-    inStock: true,
-    tags: ['new', 'bestseller'],
-    featured: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Shadow Cargo Pants',
-    slug: 'shadow-cargo-pants',
-    description: 'Technical fabric with deep pockets and premium finish.',
-    price: 195,
-    images: [{ url: '/images/product-2.jpg', alt: 'Shadow Cargo', width: 800, height: 1000 }],
-    category: 'bottoms',
-    sizes: [
-      { label: 'XS', available: false },
-      { label: 'S', available: true },
-      { label: 'M', available: true },
-      { label: 'L', available: true },
-      { label: 'XL', available: true },
-    ],
-    colors: [
-      { name: 'Black', hex: '#111111', available: true },
-      { name: 'Slate', hex: '#334155', available: true },
-    ],
-    materials: ['65% Polyester', '35% Cotton'],
-    inStock: true,
-    tags: ['new'],
-    featured: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    name: 'Void Hoodie',
-    slug: 'void-hoodie',
-    description: 'The darkness you wear. Ultra-soft fleece interior.',
-    price: 245,
-    comparePrice: 295,
-    images: [{ url: '/images/product-3.jpg', alt: 'Void Hoodie', width: 800, height: 1000 }],
-    category: 'tops',
-    sizes: [
-      { label: 'S', available: true },
-      { label: 'M', available: true },
-      { label: 'L', available: true },
-      { label: 'XL', available: true },
-    ],
-    colors: [{ name: 'Void Black', hex: '#080808', available: true }],
-    materials: ['80% Cotton', '20% Polyester'],
-    inStock: true,
-    tags: ['bestseller'],
-    featured: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    name: 'Eclipse Jacket',
-    slug: 'eclipse-jacket',
-    description: 'Structured outerwear with gold hardware.',
-    price: 425,
-    images: [{ url: '/images/product-4.jpg', alt: 'Eclipse Jacket', width: 800, height: 1000 }],
-    category: 'outerwear',
-    sizes: [
-      { label: 'S', available: true },
-      { label: 'M', available: true },
-      { label: 'L', available: false },
-    ],
-    colors: [
-      { name: 'Black', hex: '#0A0A0A', available: true },
-      { name: 'Charcoal', hex: '#1a1a1a', available: true },
-    ],
-    materials: ['Wool blend', 'Silk lining'],
-    inStock: true,
-    tags: ['limited'],
-    featured: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
-
 const tabs = ['All', 'New Arrivals', 'Bestsellers', 'Sale']
 
-export default function ProductShowcase() {
+interface ProductShowcaseProps {
+  products: Product[]
+}
+
+export default function ProductShowcase({ products }: ProductShowcaseProps) {
   const [activeTab, setActiveTab] = useState('All')
 
   useEffect(() => {
@@ -122,15 +26,15 @@ export default function ProductShowcase() {
   const filteredProducts = useMemo(() => {
     switch (activeTab) {
       case 'New Arrivals':
-        return sampleProducts.filter((p) => p.tags.includes('new'))
+        return products.filter((p) => p.tags.includes('new'))
       case 'Bestsellers':
-        return sampleProducts.filter((p) => p.tags.includes('bestseller'))
+        return products.filter((p) => p.tags.includes('bestseller'))
       case 'Sale':
-        return sampleProducts.filter((p) => Boolean(p.comparePrice))
+        return products.filter((p) => Boolean(p.comparePrice))
       default:
-        return sampleProducts
+        return products
     }
-  }, [activeTab])
+  }, [activeTab, products])
 
   return (
     <section className="section-padding bg-brand-black relative">
