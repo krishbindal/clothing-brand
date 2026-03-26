@@ -1,28 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false)
-  const [isClient, setIsClient] = useState(false)
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === 'undefined') return () => {}
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+      const mediaQuery = window.matchMedia(query)
+      const handler = () => onStoreChange()
+      mediaQuery.addEventListener('change', handler)
 
-  useEffect(() => {
-    if (!isClient) return
-
-    const mediaQuery = window.matchMedia(query)
-    setMatches(mediaQuery.matches)
-
-    const handler = (event: MediaQueryListEvent) => {
-      setMatches(event.matches)
-    }
-
-    mediaQuery.addEventListener('change', handler)
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [query, isClient])
-
-  return matches
+      return () => mediaQuery.removeEventListener('change', handler)
+    },
+    () => (typeof window === 'undefined' ? false : window.matchMedia(query).matches),
+    () => false
+  )
 }
 
 // Preset breakpoints

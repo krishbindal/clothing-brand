@@ -1,7 +1,6 @@
 import { getCategories } from '@/lib/sanity'
 import CategoryCard from '@/components/ui/CategoryCard'
 import EmptyState from '@/components/ui/EmptyState'
-import { Package } from 'lucide-react'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -41,7 +40,6 @@ export default async function CollectionsPage() {
           </div>
         ) : (
           <EmptyState
-            icon={Package}
             title="No Collections Available"
             description="We're currently curating our collections. Check back soon for our latest offerings."
             actionLabel="Browse All Products"
