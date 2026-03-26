@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { Product } from '@/types'
 

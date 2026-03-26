@@ -1,9 +1,11 @@
+'use client'
+
 import { motion } from 'framer-motion'
 import { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 
 interface EmptyStateProps {
-  icon: LucideIcon
+  icon?: LucideIcon
   title: string
   description: string
   actionLabel?: string
@@ -26,14 +28,16 @@ export default function EmptyState({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="flex flex-col items-center justify-center py-20 px-4"
     >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="mb-6 p-6 rounded-full bg-brand-card border border-brand-border"
-      >
-        <Icon size={40} className="text-brand-gray-500" strokeWidth={1.5} />
-      </motion.div>
+      {Icon && (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-6 p-6 rounded-full bg-brand-card border border-brand-border"
+        >
+          <Icon size={40} className="text-brand-gray-500" strokeWidth={1.5} />
+        </motion.div>
+      )}
 
       <h3 className="text-2xl font-display font-semibold text-brand-white mb-3 tracking-tight">
         {title}

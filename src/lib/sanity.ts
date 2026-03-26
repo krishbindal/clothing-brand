@@ -1,13 +1,15 @@
 import { createClient, groq } from 'next-sanity'
-import imageUrlBuilder from '@sanity/image-url'
+import { createImageUrlBuilder, type SanityImageSource } from '@sanity/image-url'
 import { Product } from '@/types'
 import type { Category } from '@/types'
 
 interface SanityProductResponse {
-  _id: string
+  id: string
   name: string
+  slug?: string
+  description?: string
   price: number
-  discountPrice?: number
+  comparePrice?: number
   inStock: boolean
   images?: string[]
   category?: string
@@ -31,10 +33,24 @@ export const sanityClient = createClient({
   useCdn: process.env.NODE_ENV === 'production',
 })
 
-const builder = imageUrlBuilder(sanityClient)
+const builder = createImageUrlBuilder(sanityClient)
 
-export function urlFor(source: any) {
+export function urlFor(source: SanityImageSource) {
   return builder.image(source)
+}
+
+async function fetchSanitySafely<T>(
+  operationName: string,
+  operation: () => Promise<T>,
+  fallback: T,
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    const details = error instanceof Error ? error.message : String(error)
+    console.error(`Sanity fetch failed (${operationName}): ${details}`)
+    return fallback
+  }
 }
 
 export async function getAllProducts(category?: string): Promise<Product[]> {
@@ -76,10 +92,23 @@ export async function getAllProducts(category?: string): Promise<Product[]> {
       "updatedAt": _updatedAt
     }
   `
-  const products = await sanityClient.fetch(query, category ? { category } : {}, { next: { revalidate: 60, tags: ['products'] } })
+  const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'getAllProducts',
+    () =>
+      sanityClient.fetch(
+        query,
+        category ? { category } : {},
+        { next: { revalidate: 60, tags: ['products'] } }
+      ),
+    []
+  )
   
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
+    category: p.category || '',
+    featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
     sizes: p.sizes?.map((size: string) => ({ label: size, available: p.inStock })) || [],
     colors: p.colors?.map((color: string) => ({ name: color, hex: '#000000', available: p.inStock })) || [],
@@ -109,11 +138,20 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       "updatedAt": _updatedAt
     }
   `
-  const p = await sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`product:${slug}`] } })
+  const p = await fetchSanitySafely<SanityProductResponse | null>(
+    'getProductBySlug',
+    () =>
+      sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`product:${slug}`] } }),
+    null,
+  )
   if (!p) return null
 
   return {
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
+    category: p.category || '',
+    featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
     sizes: p.sizes?.map((size: string) => ({ label: size, available: p.inStock })) || [],
     colors: p.colors?.map((color: string) => ({ name: color, hex: '#000000', available: p.inStock })) || [],
@@ -131,7 +169,11 @@ export async function getCategories(): Promise<Category[]> {
     "image": image.asset->url,
     "productCount": count(*[_type == "product" && references(^._id)])
   }`
-  return await sanityClient.fetch(query, {}, { next: { revalidate: 60, tags: ['categories'] } })
+  return await fetchSanitySafely<Category[]>(
+    'getCategories',
+    () => sanityClient.fetch(query, {}, { next: { revalidate: 60, tags: ['categories'] } }),
+    []
+  )
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -143,7 +185,12 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     "image": image.asset->url,
     description
   }`
-  return await sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`category:${slug}`] } })
+  return await fetchSanitySafely<Category | null>(
+    'getCategoryBySlug',
+    () =>
+      sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`category:${slug}`] } }),
+    null,
+  )
 }
 
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
@@ -168,10 +215,19 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
     }
   `
 
-  const products = await sanityClient.fetch(query, { categorySlug }, { next: { revalidate: 60, tags: ['products', `category:${categorySlug}`] } })
+  const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'getProductsByCategory',
+    () =>
+      sanityClient.fetch(query, { categorySlug }, { next: { revalidate: 60, tags: ['products', `category:${categorySlug}`] } }),
+    []
+  )
 
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
+    category: p.category || '',
+    featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
     sizes: p.sizes?.map((size: string) => ({ label: size, available: p.inStock })) || [],
     colors: p.colors?.map((color: string) => ({ name: color, hex: '#000000', available: p.inStock })) || [],
@@ -206,10 +262,18 @@ export async function searchProducts(searchQuery: string): Promise<Product[]> {
     }
   `
 
-  const products = await sanityClient.fetch(query, { searchQuery }, { next: { revalidate: 0 } })
+  const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'searchProducts',
+    () => sanityClient.fetch(query, { searchQuery }, { next: { revalidate: 0 } }),
+    []
+  )
 
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
+    category: p.category || '',
+    featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
     sizes: p.sizes?.map((size: string) => ({ label: size, available: p.inStock })) || [],
     colors: p.colors?.map((color: string) => ({ name: color, hex: '#000000', available: p.inStock })) || [],
