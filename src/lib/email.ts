@@ -13,6 +13,15 @@ const transporter = nodemailer.createTransport({
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@clothingbrand.com'
 const BRAND_NAME = process.env.NEXT_PUBLIC_BRAND_NAME || 'LUXE'
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 export async function sendVerificationEmail(email: string, token: string, name?: string) {
   const verifyUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`
 
@@ -194,6 +203,42 @@ export async function sendOrderConfirmationEmail(
             </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  })
+}
+
+export async function sendNewsletterSubscriptionEmail(email: string) {
+  const recipient = process.env.NEWSLETTER_NOTIFY_EMAIL || FROM_EMAIL
+  const safeEmail = escapeHtml(email)
+
+  await transporter.sendMail({
+    from: `"${BRAND_NAME}" <${FROM_EMAIL}>`,
+    to: recipient,
+    subject: `New newsletter signup for ${BRAND_NAME}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>New Newsletter Signup</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #0A0A0A; color: #F5F5F5; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+            .card { background: #161616; border: 1px solid #222222; border-radius: 12px; padding: 32px; }
+            h1 { font-size: 22px; margin: 0 0 16px; }
+            p { color: #B0B0B0; margin: 0 0 12px; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="card">
+              <h1>New Newsletter Signup</h1>
+              <p>A visitor subscribed to the newsletter.</p>
+              <p><strong>Email:</strong> ${safeEmail}</p>
             </div>
           </div>
         </body>
