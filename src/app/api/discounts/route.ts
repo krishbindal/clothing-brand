@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 
 const FALLBACK_CODES = process.env.NEXT_PUBLIC_DISCOUNT_CODES
   ?.split(',')
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const now = new Date()
     const discount =
       process.env.DATABASE_URL
-        ? await prisma.discountCode.findUnique({ where: { code } })
+        ? await getPrisma().discountCode.findUnique({ where: { code } })
         : null
 
     const fallback = (!discount && FALLBACK_CODES

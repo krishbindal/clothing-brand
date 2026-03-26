@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma, OrderStatus } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 import { Address, CartItem } from '@/types'
 import { sendOrderConfirmationEmail } from '@/lib/email'
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     const discountCode = discountCodeRaw
-      ? await prisma.discountCode.findUnique({
+      ? await getPrisma().discountCode.findUnique({
           where: { code: discountCodeRaw },
         })
       : null
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       Number(baseOrder.shipping) +
       Number(baseOrder.tax)
 
-    const savedOrder = await prisma.order.create({
+    const savedOrder = await getPrisma().order.create({
       data: {
         ...baseOrder,
         discountAmount,
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (discountCode) {
-      await prisma.discountCode.update({
+      await getPrisma().discountCode.update({
         where: { id: discountCode.id },
         data: { usedCount: { increment: 1 } },
       })
@@ -195,7 +195,7 @@ export async function GET(req: NextRequest) {
         ? { guestEmail: email }
         : {}
 
-    const orders = await prisma.order.findMany({
+    const orders = await getPrisma().order.findMany({
       where,
       include: { items: true, discountCode: true },
       orderBy: { createdAt: 'desc' },

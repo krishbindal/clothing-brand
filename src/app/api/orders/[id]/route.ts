@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { OrderStatus } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 
 const ALLOWED_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
 
@@ -15,7 +15,7 @@ export async function GET(
   }
 
   try {
-    const order = await prisma.order.findUnique({
+    const order = await getPrisma().order.findUnique({
       where: { id },
       include: { items: true, discountCode: true },
     })
@@ -46,7 +46,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
-    const updated = await prisma.order.update({
+    const updated = await getPrisma().order.update({
       where: { id },
       data: {
         ...(body.status ? { status: body.status as OrderStatus } : {}),

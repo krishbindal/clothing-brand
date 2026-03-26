@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ stored: false }, { status: 201 })
     }
 
+    const prisma = getPrisma()
     await prisma.analyticsEvent.create({
       data: {
         type: body.type,
@@ -52,6 +53,7 @@ export async function GET(_req: NextRequest) {
 
   try {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const prisma = getPrisma()
     const [pageViews, productClicks, addToCart] = await Promise.all([
       prisma.analyticsEvent.count({ where: { type: 'PAGE_VIEW', createdAt: { gte: since } } }),
       prisma.analyticsEvent.count({ where: { type: 'PRODUCT_CLICK', createdAt: { gte: since } } }),

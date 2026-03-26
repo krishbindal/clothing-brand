@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 import { sendVerificationEmail } from '@/lib/email'
 import { z } from 'zod'
 
@@ -40,19 +40,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, email, password } = parsed.data
-    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    const existing = await getPrisma().user.findUnique({ where: { email: email.toLowerCase() } })
 
     if (existing) {
       return NextResponse.json({ message: 'If this email is not registered, a verification link has been sent.' }, { status: 200 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
-    const user = await prisma.user.create({
+    const user = await getPrisma().user.create({
       data: { name, email: email.toLowerCase(), password: hashedPassword },
     })
 
     const token = crypto.randomBytes(32).toString('hex')
-    await prisma.verificationToken.create({
+    await getPrisma().verificationToken.create({
       data: { userId: user.id, token, expires: new Date(Date.now() + 24 * 60 * 60 * 1000) },
     })
 

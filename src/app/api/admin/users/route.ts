@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +9,7 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
+    const prisma = getPrisma()
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {

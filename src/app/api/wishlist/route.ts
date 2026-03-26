@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ export async function GET(_req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const prisma = getPrisma()
   const items = await prisma.wishlistItem.findMany({
     where: { userId: session.user.id },
     include: { product: true },
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
 
   const { productId } = parsed.data
+  const prisma = getPrisma()
   const product = await prisma.product.findUnique({ where: { id: productId } })
   if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 
@@ -47,6 +49,7 @@ export async function DELETE(req: NextRequest) {
   const parsed = wishlistSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
 
+  const prisma = getPrisma()
   await prisma.wishlistItem.deleteMany({ where: { userId: session.user.id, productId: parsed.data.productId } })
   return NextResponse.json({ success: true })
 }
