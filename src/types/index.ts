@@ -146,6 +146,15 @@ export interface Collection {
   productCount?: number
 }
 
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  image?: string
+  description?: string
+  productCount?: number
+}
+
 export interface FilterState {
   categories: string[]
   sizes: string[]
