@@ -1,9 +1,10 @@
 'use client'
 
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { X, Minus, Plus, ShoppingBag, Trash2, ShieldCheck, RotateCcw, Truck } from 'lucide-react'
+import { X, Minus, Plus, ShoppingBag, Trash2, ShieldCheck, RotateCcw, Truck, Check } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
@@ -51,9 +52,10 @@ interface CartLineItemProps {
   item: ReturnType<typeof useCart>['items'][number]
   onUpdateQuantity: (id: string, quantity: number) => void
   onRemove: (id: string) => void
+  highlight?: boolean
 }
 
-function CartLineItem({ item, onUpdateQuantity, onRemove }: CartLineItemProps) {
+function CartLineItem({ item, onUpdateQuantity, onRemove, highlight = false }: CartLineItemProps) {
   const handleDecrease = () => {
     const nextQty = Math.max(1, item.quantity - 1)
     onUpdateQuantity(item.id, nextQty)
@@ -69,10 +71,14 @@ function CartLineItem({ item, onUpdateQuantity, onRemove }: CartLineItemProps) {
       key={item.id}
       layout
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        backgroundColor: highlight ? 'rgba(201,168,76,0.06)' : 'transparent',
+      }}
       exit={{ opacity: 0, x: 80, transition: { duration: 0.25 } }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="flex gap-4 py-4 border-b border-brand-border/30 last:border-0 group"
+      className="flex gap-4 py-4 border-b border-brand-border/30 last:border-0 group rounded-md px-1"
     >
       <div className="relative w-20 h-[100px] rounded-lg overflow-hidden bg-brand-card flex-shrink-0">
         {item.product.images?.[0]?.url ? (
@@ -190,6 +196,40 @@ export default function CartDrawer() {
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
   const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const freeShipping = remaining <= 0
+  const [justAddedId, setJustAddedId] = useState<string | null>(null)
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previousIdsRef = useRef<string[]>([])
+
+  const estimatedDelivery = useMemo(() => {
+    const format = (offset: number) => {
+      const date = new Date()
+      date.setDate(date.getDate() + offset)
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+    return `${format(3)} - ${format(6)}`
+  }, [])
+
+  useEffect(() => {
+    const prevIds = previousIdsRef.current
+    const newItem = items.find((item) => !prevIds.includes(item.id))
+    if (newItem) {
+      setJustAddedId(newItem.id)
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+      highlightTimeoutRef.current = setTimeout(() => setJustAddedId(null), 1800)
+    }
+    previousIdsRef.current = items.map((item) => item.id)
+  }, [items])
+
+  useEffect(
+    () => () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+    },
+    []
+  )
 
   return (
     <AnimatePresence>
@@ -254,6 +294,21 @@ export default function CartDrawer() {
               </div>
             )}
 
+            <AnimatePresence>
+              {justAddedId && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="mx-6 mt-4 flex items-center gap-2 rounded-lg border border-brand-gold/30 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold"
+                >
+                  <Check size={14} />
+                  Added to your cart
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-0">
               {items.length === 0 ? (
@@ -266,6 +321,7 @@ export default function CartDrawer() {
                       item={item}
                       onUpdateQuantity={updateQuantity}
                       onRemove={removeItem}
+                      highlight={justAddedId === item.id}
                     />
                   ))}
                 </AnimatePresence>
@@ -281,6 +337,10 @@ export default function CartDrawer() {
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-brand-gray-400 text-sm">Subtotal</span>
                   <span className="text-brand-white font-semibold text-lg">{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-brand-gray-400">
+                  <span>Estimated delivery</span>
+                  <span className="text-brand-white">{estimatedDelivery}</span>
                 </div>
                 <p className="text-[11px] text-brand-gray-600">
                   Shipping and taxes calculated at checkout
