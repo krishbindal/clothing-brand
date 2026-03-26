@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const announcements = [
   'Free shipping on orders over $150 · Use code LUXE10 for 10% off',
@@ -12,26 +13,39 @@ const announcements = [
 export default function AnnouncementBar() {
   const [visible, setVisible] = useState(true)
 
-  if (!visible) return null
-
   return (
-    <div className="bg-brand-gold text-brand-black py-2.5 px-4 relative overflow-hidden">
-      <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto">
-        <div className="flex-1 overflow-hidden text-center">
-          <div className="animate-ticker inline-flex whitespace-nowrap">
-            {[...announcements, ...announcements].map((msg, i) => (
-              <span key={i} className="mx-12 text-xs font-semibold uppercase tracking-widest">{msg}</span>
-            ))}
-          </div>
-        </div>
-        <button
-          onClick={() => setVisible(false)}
-          className="flex-shrink-0 p-1 opacity-70 hover:opacity-100 transition-opacity"
-          aria-label="Dismiss announcement"
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="bg-gradient-to-r from-brand-gold via-brand-gold-light to-brand-gold text-brand-black relative overflow-hidden"
         >
-          <X size={14} />
-        </button>
-      </div>
-    </div>
+          <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto py-2.5 px-4">
+            <div className="flex-1 overflow-hidden text-center mask-edges">
+              <div className="animate-ticker inline-flex whitespace-nowrap">
+                {[...announcements, ...announcements].map((msg, i) => (
+                  <span
+                    key={i}
+                    className="mx-12 text-[11px] font-semibold uppercase tracking-[0.15em]"
+                  >
+                    {msg}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => setVisible(false)}
+              className="flex-shrink-0 p-1 opacity-60 hover:opacity-100 transition-opacity duration-300"
+              aria-label="Dismiss announcement"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

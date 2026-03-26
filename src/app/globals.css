@@ -5,6 +5,8 @@
   :root {
     --font-inter: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-playfair: Georgia, 'Times New Roman', serif;
+    --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   * {
@@ -15,6 +17,8 @@
 
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
@@ -29,38 +33,68 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #111111;
+    background: #0A0A0A;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333333;
-    border-radius: 3px;
+    background: linear-gradient(180deg, #333333 0%, #222222 100%);
+    border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #C9A84C;
+    background: linear-gradient(180deg, #C9A84C 0%, #A07830 100%);
+  }
+
+  /* Premium image rendering */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+  }
+
+  /* Smooth focus outlines */
+  :focus-visible {
+    outline: 1px solid rgba(201, 168, 76, 0.6);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-gold to-brand-gold-light text-brand-black font-semibold text-sm uppercase tracking-widest rounded transition-all duration-300 hover:shadow-gold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-brand-gold to-brand-gold-light text-brand-black font-semibold text-xs uppercase tracking-[0.2em] rounded-sm transition-all duration-500 hover:shadow-gold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .btn-primary:hover::after {
+    opacity: 1;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-brand-border text-brand-white font-semibold text-sm uppercase tracking-widest rounded transition-all duration-300 hover:border-brand-gold hover:text-brand-gold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-brand-border text-brand-white font-semibold text-xs uppercase tracking-[0.2em] rounded-sm transition-all duration-500 hover:border-brand-gold hover:text-brand-gold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-brand-gray-400 font-medium text-sm transition-all duration-200 hover:text-brand-white;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-brand-gray-400 font-medium text-sm transition-all duration-300 hover:text-brand-white;
   }
 
   .card-dark {
-    @apply bg-brand-card border border-brand-border rounded-lg overflow-hidden;
+    @apply bg-brand-card border border-brand-border rounded-lg overflow-hidden transition-all duration-500;
+  }
+
+  .card-dark:hover {
+    border-color: rgba(201, 168, 76, 0.2);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 168, 76, 0.05);
   }
 
   .gold-text {
@@ -68,7 +102,7 @@
   }
 
   .section-padding {
-    @apply px-4 sm:px-6 lg:px-8 py-16 md:py-24;
+    @apply px-4 sm:px-6 lg:px-8 py-20 md:py-28;
   }
 
   .container-wide {
@@ -76,7 +110,7 @@
   }
 
   .input-dark {
-    @apply w-full bg-brand-darker border border-brand-border text-brand-white rounded px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:border-brand-gold;
+    @apply w-full bg-brand-darker border border-brand-border text-brand-white rounded-sm px-4 py-3 text-sm transition-all duration-300 focus:outline-none focus:border-brand-gold focus:shadow-[0_0_0_1px_rgba(201,168,76,0.3)];
   }
 
   .shimmer {
@@ -87,6 +121,30 @@
   .glow-gold {
     @apply shadow-gold;
   }
+
+  /* Section headers — consistent across site */
+  .section-overline {
+    @apply text-brand-gold text-[11px] font-semibold uppercase tracking-[0.45em] mb-4 inline-block;
+  }
+
+  .section-title {
+    @apply text-display-md font-display font-bold text-brand-white leading-tight;
+  }
+
+  /* Premium glassmorphism */
+  .glass {
+    background: rgba(22, 22, 22, 0.7);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-gold {
+    background: rgba(201, 168, 76, 0.06);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+  }
 }
 
 @layer utilities {
@@ -96,5 +154,60 @@
 
   .bg-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  /* Mask for fade-out edges */
+  .mask-edges {
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+
+  /* Animate on viewport enter */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s var(--ease-luxury), transform 0.8s var(--ease-luxury);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Line hover underline effect */
+  .hover-line {
+    position: relative;
+  }
+
+  .hover-line::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #C9A84C, #E8C97A);
+    transition: width 0.4s var(--ease-luxury);
+  }
+
+  .hover-line:hover::after {
+    width: 100%;
+  }
+
+  /* Skeleton shimmer loading */
+  .shimmer {
+    background: linear-gradient(
+      110deg,
+      #1a1a1a 30%,
+      #252525 50%,
+      #1a1a1a 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }

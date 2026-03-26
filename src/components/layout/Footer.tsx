@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Globe, Link2, Play } from 'lucide-react'
 
 const footerLinks = {
   Shop: [
@@ -27,32 +26,37 @@ const footerLinks = {
   ],
 }
 
+const socialLinks = [
+  { label: 'Instagram', href: '#', icon: 'IG' },
+  { label: 'Twitter', href: '#', icon: 'X' },
+  { label: 'TikTok', href: '#', icon: 'TK' },
+]
+
 export default function Footer() {
   return (
-    <footer className="bg-brand-darker border-t border-brand-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+    <footer className="bg-brand-darker border-t border-brand-border/50 relative">
+      {/* Subtle top glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-px bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-14">
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link href="/" className="text-2xl font-display font-bold tracking-[0.3em] gold-text">
               LUXE
             </Link>
-            <p className="text-brand-gray-500 text-sm mt-4 leading-relaxed">
+            <p className="text-brand-gray-500 text-sm mt-5 leading-relaxed max-w-[250px]">
               Premium dark luxury clothing for those who move beyond the ordinary.
             </p>
-            <div className="flex gap-4 mt-6">
-              {[
-                { icon: Globe, href: '#', label: 'Instagram' },
-                { icon: Link2, href: '#', label: 'Twitter' },
-                { icon: Play, href: '#', label: 'YouTube' },
-              ].map(({ icon: Icon, href, label }) => (
+            <div className="flex gap-3 mt-7">
+              {socialLinks.map(({ href, label, icon }) => (
                 <Link
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 rounded-full border border-brand-border flex items-center justify-center text-brand-gray-500 hover:text-brand-gold hover:border-brand-gold transition-all duration-200"
+                  className="w-10 h-10 rounded-full border border-brand-border/60 flex items-center justify-center text-brand-gray-500 text-xs font-semibold tracking-wider hover:text-brand-gold hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all duration-400"
                 >
-                  <Icon size={16} />
+                  {icon}
                 </Link>
               ))}
             </div>
@@ -61,15 +65,15 @@ export default function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="text-brand-white font-semibold text-sm uppercase tracking-widest mb-4">
+              <h3 className="text-brand-white font-semibold text-xs uppercase tracking-[0.2em] mb-5">
                 {category}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-brand-gray-500 hover:text-brand-white text-sm transition-colors duration-200"
+                      className="text-brand-gray-500 hover:text-brand-white text-sm transition-colors duration-300 hover-line inline-block"
                     >
                       {link.label}
                     </Link>
@@ -81,15 +85,18 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-brand-border mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-brand-gray-600 text-xs">
+        <div className="border-t border-brand-border/40 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-5">
+          <p className="text-brand-gray-600 text-xs tracking-wide">
             © {new Date().getFullYear()} LUXE. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <p className="text-brand-gray-600 text-xs">We accept:</p>
+          <div className="flex items-center gap-5">
+            <p className="text-brand-gray-600 text-xs">We accept</p>
             <div className="flex gap-2">
               {['Visa', 'MC', 'Amex', 'PayPal'].map((card) => (
-                <span key={card} className="text-xs text-brand-gray-600 border border-brand-border rounded px-1.5 py-0.5">
+                <span
+                  key={card}
+                  className="text-[10px] text-brand-gray-500 border border-brand-border/50 rounded px-2 py-0.5 font-medium"
+                >
                   {card}
                 </span>
               ))}

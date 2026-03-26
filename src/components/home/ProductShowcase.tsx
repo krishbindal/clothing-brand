@@ -133,21 +133,25 @@ export default function ProductShowcase() {
   }, [activeTab])
 
   return (
-    <section className="section-padding bg-brand-black">
-      <div className="container-wide">
+    <section className="section-padding bg-brand-black relative">
+      {/* Background subtle glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-brand-gold/3 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="container-wide relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10"
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12"
         >
           <div>
-            <p className="text-brand-gold text-xs font-bold uppercase tracking-[0.4em] mb-2">Featured</p>
-            <h2 className="text-display-md font-display font-bold text-brand-white">The Drop</h2>
+            <p className="section-overline">Featured</p>
+            <h2 className="section-title">The Drop</h2>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 bg-brand-card rounded-lg p-1">
+          {/* Tabs — refined pill toggle */}
+          <div className="flex gap-1 bg-brand-card/80 rounded-lg p-1 border border-brand-border/40">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -155,9 +159,9 @@ export default function ProductShowcase() {
                   setActiveTab(tab)
                   localStorage.setItem('featured-tab', tab)
                 }}
-                className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ease-out ${
+                className={`px-4 py-2 text-xs font-medium rounded-md transition-all duration-400 ease-luxury relative ${
                   activeTab === tab
-                    ? 'bg-brand-gold text-brand-black scale-[1.02]'
+                    ? 'bg-brand-gold text-brand-black shadow-[0_2px_8px_rgba(201,168,76,0.3)]'
                     : 'text-brand-gray-400 hover:text-brand-white'
                 }`}
               >
@@ -170,10 +174,10 @@ export default function ProductShowcase() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
           >
             {filteredProducts.map((product, i) => (
@@ -186,11 +190,18 @@ export default function ProductShowcase() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="flex justify-center mt-12"
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="flex justify-center mt-14"
         >
-          <Link href="/shop" className="btn-secondary group hover:shadow-[0_8px_30px_rgba(201,168,76,0.22)]">
+          <Link
+            href="/shop"
+            className="btn-secondary group"
+          >
             View All Products
-            <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
+            <ArrowRight
+              size={15}
+              className="transition-transform duration-500 ease-luxury group-hover:translate-x-2"
+            />
           </Link>
         </motion.div>
       </div>
