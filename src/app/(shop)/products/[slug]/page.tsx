@@ -27,7 +27,7 @@ const accordionData = [
   },
 ]
 
-export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function ProductPage({ params }: { params: { slug: string } }) {
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
@@ -50,9 +50,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     : 0
 
   const handleAddToCart = () => {
-    if (!product) return
-    if (!selectedSize) return
-    addItem(product, quantity, selectedSize, selectedColor)
+    if (!product || !selectedSize) return
+    addItem(product, Math.max(1, quantity), selectedSize, selectedColor || product.colors?.[0]?.name || '')
     setAddedToCart(true)
     if (addFeedbackTimeoutRef.current) {
       clearTimeout(addFeedbackTimeoutRef.current)
@@ -65,8 +64,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const controller = new AbortController()
 
     async function loadProduct() {
-      const { slug } = await params
-
+      const { slug } = params
       try {
         const response = await fetch(`/api/products?slug=${encodeURIComponent(slug)}`, {
           signal: controller.signal,
@@ -79,8 +77,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           return
         }
         setProduct(payload.product)
-        setRecommendedProducts(payload.featuredProducts.filter((item) => item.slug !== payload.product?.slug).slice(0, 4))
+        setRecommendedProducts(
+          (payload.featuredProducts || [])
+            .filter((item) => item.slug !== payload.product?.slug)
+            .slice(0, 4)
+        )
         setSelectedColor(payload.product?.colors?.[0]?.name || '')
+        setSelectedSize(payload.product?.sizes?.[0]?.label || '')
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           if (mounted) {
@@ -107,7 +110,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     return <div className="min-h-screen bg-brand-black pt-20" />
   }
 
-  if (!product) return null
+  if (!product) {
+    return <div className="min-h-screen bg-brand-black pt-20 text-brand-gray-300 px-4">Product unavailable. Please try again.</div>
+  }
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
   const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3

@@ -3,9 +3,10 @@ import { Product } from '@/types'
 
 interface ProductGridProps {
   products: Product[]
+  priorityCount?: number
 }
 
-export default function ProductGrid({ products }: ProductGridProps) {
+export default function ProductGrid({ products, priorityCount = 4 }: ProductGridProps) {
   if (!products?.length) {
     return (
       <div className="w-full py-24 flex justify-center text-brand-gray-500 font-light tracking-wide uppercase">
@@ -16,8 +17,8 @@ export default function ProductGrid({ products }: ProductGridProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, index) => (
+        <ProductCard key={product.id} product={product} priority={index < priorityCount} />
       ))}
     </div>
   )

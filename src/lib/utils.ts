@@ -34,7 +34,10 @@ export function truncate(str: string, length: number): string {
 }
 
 export function getDiscountPercentage(price: number, comparePrice: number): number {
-  return Math.round(((comparePrice - price) / comparePrice) * 100)
+  if (!Number.isFinite(price) || !Number.isFinite(comparePrice) || comparePrice <= 0) {
+    return 0
+  }
+  return Math.max(0, Math.round(((comparePrice - price) / comparePrice) * 100))
 }
 
 export function generateOrderId(): string {
