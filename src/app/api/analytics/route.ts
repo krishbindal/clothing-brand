@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 type EventType = 'PAGE_VIEW' | 'PRODUCT_CLICK' | 'ADD_TO_CART'
 
 export async function POST(req: NextRequest) {
