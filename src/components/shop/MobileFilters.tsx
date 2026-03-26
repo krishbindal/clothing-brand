@@ -1,7 +1,7 @@
 'use client'
 
 import Modal from '@/components/ui/Modal'
-import { CATEGORIES, SIZES } from '@/lib/shop'
+import FiltersCore from '@/components/filters/FiltersCore'
 import { FilterState } from '@/types'
 import { Sparkles, SlidersHorizontal } from 'lucide-react'
 
@@ -26,8 +26,6 @@ export default function MobileFilters({
   onApply,
   onClear,
 }: MobileFiltersProps) {
-  const categoryOptions = categories.length ? categories : CATEGORIES.filter((category) => category !== 'all')
-
   return (
     <Modal
       open={open}
@@ -59,47 +57,13 @@ export default function MobileFilters({
           <span>Choose categories and sizes to narrow results</span>
         </div>
 
-        <div>
-          <h3 className="text-[11px] text-brand-gray-500 uppercase tracking-[0.2em] mb-3 font-medium">
-            Category
-          </h3>
-          <div className="space-y-1.5">
-            {categoryOptions.map((category) => (
-              <button
-                key={category}
-                onClick={() => onToggleCategory(category)}
-                className={`block w-full text-left px-3 py-2.5 rounded-md text-sm transition-all duration-200 ${
-                  filters.categories.includes(category)
-                    ? 'bg-brand-gold/10 text-brand-gold border border-brand-gold/25'
-                    : 'text-brand-gray-400 hover:text-brand-white hover:bg-brand-card'
-                }`}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-[11px] text-brand-gray-500 uppercase tracking-[0.2em] mb-3 font-medium">
-            Size
-          </h3>
-          <div className="grid grid-cols-3 gap-1.5">
-            {SIZES.map((size) => (
-              <button
-                key={size}
-                onClick={() => onToggleSize(size)}
-                className={`h-10 text-xs border rounded-md font-medium transition-all duration-200 ${
-                  filters.sizes.includes(size)
-                    ? 'bg-brand-gold border-brand-gold text-brand-black'
-                    : 'border-brand-border text-brand-gray-400 hover:border-brand-gray-400'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </div>
+        <FiltersCore
+          filters={filters}
+          categories={categories}
+          onToggleCategory={onToggleCategory}
+          onToggleSize={onToggleSize}
+          variant="mobile"
+        />
       </div>
     </Modal>
   )
