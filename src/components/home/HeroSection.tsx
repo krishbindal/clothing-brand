@@ -7,7 +7,12 @@ import { ArrowDown, ArrowRight, Sparkles } from 'lucide-react'
 
 const EASE_LUXURY = [0.22, 1, 0.36, 1] as const
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  title?: string
+  subtitle?: string
+}
+
+export default function HeroSection({ title, subtitle }: HeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -125,7 +130,7 @@ export default function HeroSection() {
           <motion.h1
             className="text-[clamp(3.5rem,12vw,9rem)] font-display font-bold leading-[0.85] tracking-tighter"
           >
-            {['WEAR', 'THE', 'FUTURE'].map((word, i) => (
+            {(title || 'WEAR THE FUTURE').trim().split(/\s+/).map((word, i) => (
               <motion.span
                 key={word}
                 initial={{ y: '120%', opacity: 0 }}
@@ -150,8 +155,8 @@ export default function HeroSection() {
           transition={{ duration: 1, delay: 1.1, ease: EASE_LUXURY }}
           className="text-brand-gray-300 text-base sm:text-lg max-w-xl mx-auto mt-8 leading-relaxed font-light"
         >
-          Precision-crafted silhouettes, deep tonal textures, and limited drops
-          designed for those who lead with quiet force.
+          {subtitle ||
+            'Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force.'}
         </motion.p>
 
         {/* CTAs */}

@@ -9,59 +9,6 @@ import { Product, FilterState, SortOption } from '@/types'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 
-// Sample data - in production this comes from Sanity/DB
-const SAMPLE_PRODUCTS: Product[] = [
-  {
-    id: '1', name: 'Obsidian Oversized Tee', slug: 'obsidian-oversized-tee',
-    description: 'Premium heavyweight cotton.', price: 89, comparePrice: 120,
-    images: [{ url: '', alt: 'Obsidian Tee', width: 800, height: 1000 }],
-    category: 'tops', sizes: [{ label: 'XS', available: true }, { label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: true }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Cotton'],
-    inStock: true, tags: ['new'], featured: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2', name: 'Shadow Cargo Pants', slug: 'shadow-cargo-pants',
-    description: 'Technical cargo with deep pockets.', price: 195,
-    images: [{ url: '', alt: 'Cargo Pants', width: 800, height: 1000 }],
-    category: 'bottoms', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: true }],
-    colors: [{ name: 'Black', hex: '#111', available: true }, { name: 'Slate', hex: '#334155', available: true }],
-    materials: ['Polyester', 'Cotton'], inStock: true, tags: ['bestseller'], featured: false,
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3', name: 'Void Hoodie', slug: 'void-hoodie',
-    description: 'Ultra-soft fleece interior.', price: 245, comparePrice: 295,
-    images: [{ url: '', alt: 'Void Hoodie', width: 800, height: 1000 }],
-    category: 'tops', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: true }, { label: 'XL', available: true }],
-    colors: [{ name: 'Void Black', hex: '#080808', available: true }], materials: ['Cotton', 'Polyester'],
-    inStock: true, tags: ['bestseller'], featured: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4', name: 'Eclipse Jacket', slug: 'eclipse-jacket',
-    description: 'Structured outerwear with gold hardware.', price: 425,
-    images: [{ url: '', alt: 'Eclipse Jacket', width: 800, height: 1000 }],
-    category: 'outerwear', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: false }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Wool', 'Silk'],
-    inStock: true, tags: ['limited'], featured: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '5', name: 'Dark Matter Shorts', slug: 'dark-matter-shorts',
-    description: 'Lightweight technical shorts.', price: 125,
-    images: [{ url: '', alt: 'Dark Matter Shorts', width: 800, height: 1000 }],
-    category: 'bottoms', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: true }],
-    colors: [{ name: 'Black', hex: '#111', available: true }], materials: ['Nylon'],
-    inStock: true, tags: ['new'], featured: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '6', name: 'Noir Long Sleeve', slug: 'noir-long-sleeve',
-    description: 'Extended-length luxury longsleeve.', price: 115,
-    images: [{ url: '', alt: 'Noir Long Sleeve', width: 800, height: 1000 }],
-    category: 'tops', sizes: [{ label: 'XS', available: true }, { label: 'S', available: false }, { label: 'M', available: true }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Cotton'],
-    inStock: true, tags: [], featured: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-]
-
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'featured', label: 'Featured' },
   { value: 'newest', label: 'Newest' },
@@ -72,8 +19,10 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 const CATEGORIES = ['All', 'Tops', 'Bottoms', 'Outerwear', 'Accessories']
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const LOADING_TIMEOUT_MS = 3000
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([])
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     sizes: [],
@@ -87,14 +36,35 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
-  // Simulate initial data loading
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
+    const controller = new AbortController()
+    const loadingSafetyTimeout = setTimeout(() => setIsLoading(false), LOADING_TIMEOUT_MS)
+
+    async function loadProducts() {
+      try {
+        const response = await fetch('/api/products', { signal: controller.signal })
+        if (!response.ok) throw new Error('Failed to load products')
+        const payload = (await response.json()) as { products: Product[] }
+        setProducts(payload.products)
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          setProducts([])
+        }
+      } finally {
+        setIsLoading(false)
+        clearTimeout(loadingSafetyTimeout)
+      }
+    }
+
+    void loadProducts()
+    return () => {
+      controller.abort()
+      clearTimeout(loadingSafetyTimeout)
+    }
   }, [])
 
   const filteredProducts = useMemo(() => {
-    let result = [...SAMPLE_PRODUCTS]
+    let result = [...products]
 
     if (searchQuery) {
       result = result.filter((p) =>
@@ -137,7 +107,7 @@ export default function ShopPage() {
     }
 
     return result
-  }, [filters, searchQuery])
+  }, [filters, searchQuery, products])
 
   const toggleCategory = (cat: string) => {
     setFilters((prev) => ({

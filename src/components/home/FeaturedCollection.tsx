@@ -34,7 +34,30 @@ const collections = [
   },
 ]
 
-export default function FeaturedCollection() {
+interface FeaturedCollectionProps {
+  title?: string
+  items?: Array<{
+    _id: string
+    title: string
+    slug: string
+    description: string
+    productCount: number
+  }>
+}
+
+export default function FeaturedCollection({ title, items }: FeaturedCollectionProps) {
+  const content = items?.length
+    ? items.map((item) => ({
+      id: item._id,
+      name: item.title,
+      description: item.description,
+      slug: item.slug,
+      count: item.productCount,
+      gradient: 'from-gray-900 via-gray-800/50 to-black',
+      accentColor: 'rgba(180, 180, 190, 0.15)',
+    }))
+    : collections
+
   return (
     <section className="section-padding bg-brand-darker relative overflow-hidden">
       {/* Subtle background glow */}
@@ -49,11 +72,11 @@ export default function FeaturedCollection() {
           className="text-center mb-16"
         >
           <p className="section-overline">Collections</p>
-          <h2 className="section-title">Curated for the Bold</h2>
+          <h2 className="section-title">{title || 'Curated for the Bold'}</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
-          {collections.map((col, i) => (
+          {content.map((col, i) => (
             <motion.div
               key={col.id}
               initial={{ opacity: 0, y: 40 }}

@@ -1,7 +1,7 @@
 'use client'
 
-import { use, useEffect, useRef, useState } from 'react'
-import { notFound } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Share2, ChevronDown, Truck, RotateCcw, Shield, Star, Minus, Plus, ShoppingBag, Check } from 'lucide-react'
@@ -12,45 +12,6 @@ import { Product } from '@/types'
 import { cn } from '@/lib/utils'
 import ProductCard from '@/components/shop/ProductCard'
 import ImageZoom from '@/components/ui/ImageZoom'
-
-// Sample product - in prod this would be fetched from Sanity/DB
-const SAMPLE_PRODUCT: Product = {
-  id: '3',
-  name: 'Void Hoodie',
-  slug: 'void-hoodie',
-  description: 'The darkness you wear. Our signature Void Hoodie is crafted from a premium 80/20 cotton-polyester blend with a brushed ultra-soft fleece interior. Oversized silhouette with dropped shoulders, kangaroo pocket, and tonal LUXE branding.',
-  price: 245,
-  comparePrice: 295,
-  images: [
-    { url: '', alt: 'Void Hoodie Front', width: 800, height: 1000 },
-    { url: '', alt: 'Void Hoodie Back', width: 800, height: 1000 },
-    { url: '', alt: 'Void Hoodie Detail', width: 800, height: 1000 },
-  ],
-  category: 'tops',
-  collection: 'Void Series',
-  sizes: [
-    { label: 'XS', available: false, stockCount: 0 },
-    { label: 'S', available: true, stockCount: 3 },
-    { label: 'M', available: true, stockCount: 8 },
-    { label: 'L', available: true, stockCount: 12 },
-    { label: 'XL', available: true, stockCount: 5 },
-    { label: 'XXL', available: false, stockCount: 0 },
-  ],
-  colors: [
-    { name: 'Void Black', hex: '#080808', available: true },
-    { name: 'Charcoal', hex: '#2a2a2a', available: true },
-  ],
-  materials: ['80% Cotton', '20% Polyester', 'Brushed fleece interior'],
-  inStock: true,
-  stockCount: 28,
-  tags: ['bestseller', 'new'],
-  featured: true,
-  rating: 4.9,
-  reviewCount: 342,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}
-
 const accordionData = [
   {
     title: 'Details & Materials',
@@ -66,55 +27,15 @@ const accordionData = [
   },
 ]
 
-const RECOMMENDED_PRODUCTS: Product[] = [
-  {
-    id: 'rp-1', name: 'Shadow Cargo Pants', slug: 'shadow-cargo-pants',
-    description: 'Technical cargo with deep pockets.', price: 195,
-    images: [{ url: '', alt: 'Shadow Cargo Pants', width: 800, height: 1000 }],
-    category: 'bottoms', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Cotton'],
-    inStock: true, tags: ['bestseller'], featured: true, rating: 4.8, reviewCount: 216,
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'rp-2', name: 'Eclipse Jacket', slug: 'eclipse-jacket',
-    description: 'Structured outerwear with gold hardware.', price: 425,
-    images: [{ url: '', alt: 'Eclipse Jacket', width: 800, height: 1000 }],
-    category: 'outerwear', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
-    colors: [{ name: 'Charcoal', hex: '#1a1a1a', available: true }], materials: ['Wool'],
-    inStock: true, tags: ['limited'], featured: true, rating: 4.9, reviewCount: 142,
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'rp-3', name: 'Noir Long Sleeve', slug: 'noir-long-sleeve',
-    description: 'Extended-length luxury longsleeve.', price: 115,
-    images: [{ url: '', alt: 'Noir Long Sleeve', width: 800, height: 1000 }],
-    category: 'tops', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Cotton'],
-    inStock: true, tags: ['new'], featured: false, rating: 4.7, reviewCount: 91,
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'rp-4', name: 'Obsidian Oversized Tee', slug: 'obsidian-oversized-tee',
-    description: 'Premium heavyweight cotton tee.', price: 89, comparePrice: 120,
-    images: [{ url: '', alt: 'Obsidian Tee', width: 800, height: 1000 }],
-    category: 'tops', sizes: [{ label: 'S', available: true }, { label: 'M', available: true }, { label: 'L', available: true }],
-    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }], materials: ['Cotton'],
-    inStock: true, tags: ['new'], featured: true, rating: 4.8, reviewCount: 178,
-    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-  },
-]
-
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
-  void slug
-
-  const product = SAMPLE_PRODUCT
-  if (!product) notFound()
+  const router = useRouter()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedSize, setSelectedSize] = useState('')
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || '')
+  const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [openAccordion, setOpenAccordion] = useState<string | null>(null)
   const [addedToCart, setAddedToCart] = useState(false)
@@ -122,13 +43,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
-  const inWishlist = isInWishlist(product.id)
+  const inWishlist = product ? isInWishlist(product.id) : false
 
-  const discount = product.comparePrice
+  const discount = product?.comparePrice
     ? getDiscountPercentage(product.price, product.comparePrice)
     : 0
 
   const handleAddToCart = () => {
+    if (!product) return
     if (!selectedSize) return
     addItem(product, quantity, selectedSize, selectedColor)
     setAddedToCart(true)
@@ -139,12 +61,53 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   }
 
   useEffect(() => {
+    let mounted = true
+    const controller = new AbortController()
+
+    async function loadProduct() {
+      const { slug } = await params
+
+      try {
+        const response = await fetch(`/api/products?slug=${encodeURIComponent(slug)}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error('Failed to load product')
+        const payload = (await response.json()) as { product: Product | null; featuredProducts: Product[] }
+        if (!mounted) return
+        if (!payload.product) {
+          router.replace('/shop')
+          return
+        }
+        setProduct(payload.product)
+        setRecommendedProducts(payload.featuredProducts.filter((item) => item.slug !== payload.product?.slug).slice(0, 4))
+        setSelectedColor(payload.product?.colors?.[0]?.name || '')
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          if (mounted) {
+            router.replace('/shop')
+          }
+        }
+      } finally {
+        if (mounted) setIsLoading(false)
+      }
+    }
+
+    void loadProduct()
+
     return () => {
+      mounted = false
+      controller.abort()
       if (addFeedbackTimeoutRef.current) {
         clearTimeout(addFeedbackTimeoutRef.current)
       }
     }
-  }, [])
+  }, [params, router])
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-brand-black pt-20" />
+  }
+
+  if (!product) return null
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
   const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3
@@ -520,7 +483,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {RECOMMENDED_PRODUCTS.map((item, i) => (
+            {recommendedProducts.map((item, i) => (
               <ProductCard key={item.id} product={item} priority={i < 2} />
             ))}
           </div>
