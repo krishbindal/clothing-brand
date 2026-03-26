@@ -6,8 +6,8 @@ import type { Category } from '@/types'
 interface SanityProductResponse {
   id: string
   name: string
-  slug: string
-  description: string
+  slug?: string
+  description?: string
   price: number
   comparePrice?: number
   inStock: boolean
@@ -40,13 +40,15 @@ export function urlFor(source: SanityImageSource) {
 }
 
 async function fetchSanitySafely<T>(
+  operationName: string,
   operation: () => Promise<T>,
   fallback: T,
 ): Promise<T> {
   try {
     return await operation()
   } catch (error) {
-    console.error('Sanity fetch failed:', error)
+    const details = error instanceof Error ? error.message : String(error)
+    console.error(`Sanity fetch failed (${operationName}): ${details}`)
     return fallback
   }
 }
@@ -91,6 +93,7 @@ export async function getAllProducts(category?: string): Promise<Product[]> {
     }
   `
   const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'getAllProducts',
     () =>
       sanityClient.fetch(
         query,
@@ -102,6 +105,8 @@ export async function getAllProducts(category?: string): Promise<Product[]> {
   
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
     category: p.category || '',
     featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
@@ -134,6 +139,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     }
   `
   const p = await fetchSanitySafely<SanityProductResponse | null>(
+    'getProductBySlug',
     () =>
       sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`product:${slug}`] } }),
     null,
@@ -142,6 +148,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   return {
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
     category: p.category || '',
     featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
@@ -162,6 +170,7 @@ export async function getCategories(): Promise<Category[]> {
     "productCount": count(*[_type == "product" && references(^._id)])
   }`
   return await fetchSanitySafely<Category[]>(
+    'getCategories',
     () => sanityClient.fetch(query, {}, { next: { revalidate: 60, tags: ['categories'] } }),
     []
   )
@@ -177,6 +186,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     description
   }`
   return await fetchSanitySafely<Category | null>(
+    'getCategoryBySlug',
     () =>
       sanityClient.fetch(query, { slug }, { next: { revalidate: 60, tags: [`category:${slug}`] } }),
     null,
@@ -206,6 +216,7 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
   `
 
   const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'getProductsByCategory',
     () =>
       sanityClient.fetch(query, { categorySlug }, { next: { revalidate: 60, tags: ['products', `category:${categorySlug}`] } }),
     []
@@ -213,6 +224,8 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
 
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
     category: p.category || '',
     featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
@@ -250,12 +263,15 @@ export async function searchProducts(searchQuery: string): Promise<Product[]> {
   `
 
   const products = await fetchSanitySafely<SanityProductResponse[]>(
+    'searchProducts',
     () => sanityClient.fetch(query, { searchQuery }, { next: { revalidate: 0 } }),
     []
   )
 
   return products.map((p: SanityProductResponse) => ({
     ...p,
+    slug: p.slug || '',
+    description: p.description || '',
     category: p.category || '',
     featured: Boolean(p.featured),
     images: p.images?.map((url: string) => ({ url, alt: p.name, width: 800, height: 1000 })) || [],
