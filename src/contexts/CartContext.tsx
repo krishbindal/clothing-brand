@@ -1,7 +1,15 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+  useMemo,
+} from 'react'
 import { CartItem, Product } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CartState {
   items: CartItem[]
@@ -96,23 +104,52 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false })
+  const storageKey = useMemo(
+    () => (user ? `cart:${user.uid}` : 'cart:guest'),
+    [user],
+  )
 
   useEffect(() => {
-    const stored = localStorage.getItem('cart')
-    if (stored) {
-      try {
-        const items = JSON.parse(stored) as CartItem[]
-        dispatch({ type: 'HYDRATE', payload: items })
-      } catch {
-        localStorage.removeItem('cart')
+    if (typeof window === 'undefined') return
+
+    const stored = localStorage.getItem(storageKey)
+    const guestStored = user ? localStorage.getItem('cart:guest') : null
+    const legacyStored = !stored ? localStorage.getItem('cart') : null
+
+    try {
+      if (stored) {
+        dispatch({ type: 'HYDRATE', payload: JSON.parse(stored) as CartItem[] })
+        return
       }
+
+      if (guestStored && user) {
+        const guestItems = JSON.parse(guestStored) as CartItem[]
+        dispatch({ type: 'HYDRATE', payload: guestItems })
+        localStorage.setItem(storageKey, JSON.stringify(guestItems))
+        localStorage.removeItem('cart:guest')
+        return
+      }
+
+      if (legacyStored) {
+        const legacyItems = JSON.parse(legacyStored) as CartItem[]
+        dispatch({ type: 'HYDRATE', payload: legacyItems })
+        localStorage.setItem(storageKey, JSON.stringify(legacyItems))
+        localStorage.removeItem('cart')
+        return
+      }
+    } catch {
+      localStorage.removeItem(storageKey)
     }
-  }, [])
+
+    dispatch({ type: 'HYDRATE', payload: [] })
+  }, [storageKey, user])
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(state.items))
-  }, [state.items])
+    if (typeof window === 'undefined') return
+    localStorage.setItem(storageKey, JSON.stringify(state.items))
+  }, [state.items, storageKey])
 
   const itemCount = state.items.reduce((total, item) => total + item.quantity, 0)
   const subtotal = state.items.reduce(

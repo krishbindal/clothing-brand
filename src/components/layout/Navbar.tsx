@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Heart, User, Menu, X, Search, ChevronDown } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navLinks = [
   { label: 'Shop', href: '/shop', hasDropdown: true },
@@ -27,7 +27,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { itemCount, openCart } = useCart()
-  const { data: session } = useSession()
+  const { user, logout } = useAuth()
 
   const handleScroll = useCallback(() => {
     setScrolled(window.scrollY > 20)
@@ -168,7 +168,7 @@ export default function Navbar() {
               </motion.button>
 
               {/* User */}
-              {session ? (
+              {user ? (
                 <div className="relative group hidden sm:block">
                   <button className="p-2.5 text-brand-gray-400 hover:text-brand-white transition-colors duration-300">
                     <User size={19} />
@@ -189,7 +189,7 @@ export default function Navbar() {
                       </Link>
                       <hr className="my-1.5 border-brand-border/50" />
                       <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={() => void logout()}
                         className="block w-full text-left px-5 py-2.5 text-[13px] text-brand-gray-300 hover:text-brand-white hover:bg-brand-white/5 transition-all duration-200"
                       >
                         Sign Out
@@ -270,7 +270,7 @@ export default function Navbar() {
 
                 <hr className="my-4 border-brand-border/50" />
 
-                {session ? (
+                {user ? (
                   <>
                     <Link
                       href="/account"
@@ -288,7 +288,7 @@ export default function Navbar() {
                     </Link>
                     <button
                       onClick={() => {
-                        signOut({ callbackUrl: '/' })
+                        void logout()
                         setMobileOpen(false)
                       }}
                       className="text-brand-gray-300 py-2 text-base text-left hover:text-brand-white transition-colors"

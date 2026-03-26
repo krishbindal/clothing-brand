@@ -8,6 +8,7 @@ import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signupSchema, SignupFormData } from '@/lib/validations/auth'
+import { useAuth } from '@/contexts/AuthContext'
 
 const passwordRequirements = [
   { regex: /.{8,}/, label: 'At least 8 characters' },
@@ -22,6 +23,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { signup } = useAuth()
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -33,19 +35,14 @@ export default function SignupPage() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
-      })
-      const result = await response.json() as { error?: string }
-      if (!response.ok) {
-        setError(result.error || 'Failed to create account')
-      } else {
-        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
-      }
-    } catch {
-      setError('Something went wrong. Please try again.')
+      await signup(data.name, data.email, data.password)
+      router.push('/account')
+    } catch (signupError) {
+      setError(
+        signupError instanceof Error
+          ? signupError.message
+          : 'Something went wrong. Please try again.',
+      )
     } finally {
       setIsLoading(false)
     }

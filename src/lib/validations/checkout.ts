@@ -15,7 +15,7 @@ export const addressSchema = z.object({
 export const checkoutSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   shippingAddress: addressSchema,
-  saveAddress: z.boolean().default(false),
+  saveAddress: z.boolean(),
 })
 
 export type AddressFormData = z.infer<typeof addressSchema>
