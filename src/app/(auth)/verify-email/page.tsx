@@ -11,11 +11,11 @@ function VerifyEmailContent() {
   const router = useRouter()
   const token = searchParams.get('token')
   const email = searchParams.get('email')
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('pending')
+  const [status, setStatus] = useState<'success' | 'error' | 'pending'>('pending')
+  const isVerifying = Boolean(token) && status === 'pending'
 
   useEffect(() => {
     if (token) {
-      setStatus('loading')
       fetch(`/api/auth/verify-email?token=${token}`)
         .then((r) => r.json())
         .then((data: { success?: boolean }) => {
@@ -45,7 +45,7 @@ function VerifyEmailContent() {
               <p className="text-brand-gray-600 text-xs">Didn&apos;t receive the email? Check your spam folder or{' '}<button className="text-brand-gold hover:text-brand-gold-light underline underline-offset-2">resend it</button></p>
             </>
           )}
-          {status === 'loading' && (
+          {isVerifying && (
             <>
               <div className="w-16 h-16 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto"><span className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" /></div>
               <p className="text-brand-gray-400">Verifying your email...</p>

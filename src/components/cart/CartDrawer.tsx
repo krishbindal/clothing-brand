@@ -3,12 +3,53 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react'
+import { X, Minus, Plus, ShoppingBag, Trash2, ShieldCheck, RotateCcw } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { formatPrice } from '@/lib/utils'
+import { Product } from '@/types'
+
+const CART_RECOMMENDATIONS: Product[] = [
+  {
+    id: 'rec-1',
+    name: 'Noir Long Sleeve',
+    slug: 'noir-long-sleeve',
+    description: 'Extended-length luxury longsleeve.',
+    price: 115,
+    images: [{ url: '', alt: 'Noir Long Sleeve', width: 800, height: 1000 }],
+    category: 'tops',
+    sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
+    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }],
+    materials: ['Cotton'],
+    inStock: true,
+    tags: ['new'],
+    featured: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'rec-2',
+    name: 'Shadow Cargo Pants',
+    slug: 'shadow-cargo-pants',
+    description: 'Technical cargo with deep pockets.',
+    price: 195,
+    images: [{ url: '', alt: 'Shadow Cargo Pants', width: 800, height: 1000 }],
+    category: 'bottoms',
+    sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
+    colors: [{ name: 'Black', hex: '#111111', available: true }],
+    materials: ['Cotton'],
+    inStock: true,
+    tags: ['bestseller'],
+    featured: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, subtotal } = useCart()
+  const shippingThreshold = 150
+  const remaining = Math.max(0, shippingThreshold - subtotal)
+  const progress = Math.min((subtotal / shippingThreshold) * 100, 100)
 
   return (
     <AnimatePresence>
@@ -19,6 +60,7 @@ export default function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             onClick={closeCart}
           />
@@ -29,10 +71,10 @@ export default function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-brand-dark border-l border-brand-border z-50 flex flex-col"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-brand-dark border-l border-brand-border/80 z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-brand-border">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-brand-border bg-gradient-to-b from-brand-dark to-brand-dark/90">
               <div className="flex items-center gap-3">
                 <ShoppingBag size={20} className="text-brand-gold" />
                 <h2 className="text-lg font-semibold tracking-wide">Your Cart</h2>
@@ -67,7 +109,7 @@ export default function CartDrawer() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: 100 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="flex gap-4 py-4 border-b border-brand-border/50 last:border-0"
                     >
                       {/* Image */}
@@ -98,14 +140,14 @@ export default function CartDrawer() {
                           <div className="flex items-center gap-2 border border-brand-border rounded">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white transition-colors"
+                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:scale-[1.05] transition-all duration-150 ease-out"
                             >
                               <Minus size={12} />
                             </button>
                             <span className="text-sm w-6 text-center">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white transition-colors"
+                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:scale-[1.05] transition-all duration-150 ease-out"
                             >
                               <Plus size={12} />
                             </button>
@@ -127,6 +169,53 @@ export default function CartDrawer() {
             {/* Footer */}
             {items.length > 0 && (
               <div className="px-6 py-5 border-t border-brand-border space-y-4">
+                <div className="rounded-lg border border-brand-border bg-brand-black/70 p-3">
+                  <div className="flex items-center justify-between text-xs text-brand-gray-400 mb-2">
+                    <span>Free shipping progress</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-brand-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-brand-gold to-brand-gold-light transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-brand-gray-500 mt-2">
+                    {remaining > 0
+                      ? `Add ${formatPrice(remaining)} for complimentary express shipping`
+                      : 'You unlocked complimentary express shipping!'}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-brand-gray-500">Complete the look</p>
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    {CART_RECOMMENDATIONS.map((product) => (
+                      <Link
+                        key={product.id}
+                        href={`/products/${product.slug}`}
+                        onClick={closeCart}
+                        className="rounded-lg border border-brand-border bg-brand-card p-2.5 sm:p-3 hover:border-brand-gold/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition-all duration-250 ease-out"
+                      >
+                        <div className="relative w-full h-16 rounded bg-brand-muted overflow-hidden">
+                          {product.images[0]?.url ? (
+                            <Image
+                              src={product.images[0].url}
+                              alt={product.images[0].alt}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-brand-muted to-brand-dark" />
+                          )}
+                        </div>
+                        <p className="text-xs text-brand-white mt-2 truncate">{product.name}</p>
+                        <p className="text-xs text-brand-gold">{formatPrice(product.price)}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center">
                   <span className="text-brand-gray-400">Subtotal</span>
                   <span className="text-brand-white font-semibold">{formatPrice(subtotal)}</span>
@@ -135,6 +224,16 @@ export default function CartDrawer() {
                 <Link href="/checkout" onClick={closeCart} className="btn-primary w-full text-center">
                   Proceed to Checkout
                 </Link>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-brand-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={12} className="text-brand-gold" />
+                    <span>Secure SSL checkout</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <RotateCcw size={12} className="text-brand-gold" />
+                    <span>30-day returns</span>
+                  </div>
+                </div>
                 <button onClick={closeCart} className="btn-ghost w-full text-center text-sm">
                   Continue Shopping
                 </button>

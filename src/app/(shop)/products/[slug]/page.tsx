@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -64,6 +64,66 @@ const accordionData = [
   },
 ]
 
+const RECOMMENDED_PRODUCTS: Product[] = [
+  {
+    id: 'rp-1',
+    name: 'Shadow Cargo Pants',
+    slug: 'shadow-cargo-pants',
+    description: 'Technical cargo with deep pockets.',
+    price: 195,
+    images: [{ url: '', alt: 'Shadow Cargo Pants', width: 800, height: 1000 }],
+    category: 'bottoms',
+    sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
+    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }],
+    materials: ['Cotton'],
+    inStock: true,
+    tags: ['bestseller'],
+    featured: true,
+    rating: 4.8,
+    reviewCount: 216,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'rp-2',
+    name: 'Eclipse Jacket',
+    slug: 'eclipse-jacket',
+    description: 'Structured outerwear with gold hardware.',
+    price: 425,
+    images: [{ url: '', alt: 'Eclipse Jacket', width: 800, height: 1000 }],
+    category: 'outerwear',
+    sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
+    colors: [{ name: 'Charcoal', hex: '#1a1a1a', available: true }],
+    materials: ['Wool'],
+    inStock: true,
+    tags: ['limited'],
+    featured: true,
+    rating: 4.9,
+    reviewCount: 142,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'rp-3',
+    name: 'Noir Long Sleeve',
+    slug: 'noir-long-sleeve',
+    description: 'Extended-length luxury longsleeve.',
+    price: 115,
+    images: [{ url: '', alt: 'Noir Long Sleeve', width: 800, height: 1000 }],
+    category: 'tops',
+    sizes: [{ label: 'S', available: true }, { label: 'M', available: true }],
+    colors: [{ name: 'Black', hex: '#0A0A0A', available: true }],
+    materials: ['Cotton'],
+    inStock: true,
+    tags: ['new'],
+    featured: false,
+    rating: 4.7,
+    reviewCount: 91,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
+
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   // Unwrap params for Next.js 15+
   const { slug } = use(params)
@@ -78,6 +138,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [quantity, setQuantity] = useState(1)
   const [openAccordion, setOpenAccordion] = useState<string | null>(null)
   const [addedToCart, setAddedToCart] = useState(false)
+  const addFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
@@ -87,8 +148,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     if (!selectedSize) return
     addItem(product, quantity, selectedSize, selectedColor)
     setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2000)
+    if (addFeedbackTimeoutRef.current) {
+      clearTimeout(addFeedbackTimeoutRef.current)
+    }
+    addFeedbackTimeoutRef.current = setTimeout(() => setAddedToCart(false), 2000)
   }
+
+  useEffect(() => {
+    return () => {
+      if (addFeedbackTimeoutRef.current) {
+        clearTimeout(addFeedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
   const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3
@@ -97,7 +169,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     <div className="min-h-screen bg-brand-black pt-20">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <nav className="flex items-center gap-2 text-xs text-brand-gray-500">
+        <nav className="flex items-center gap-2.5 text-xs leading-relaxed text-brand-gray-500">
           <Link href="/" className="hover:text-brand-white transition-colors">Home</Link>
           <span>/</span>
           <Link href="/shop" className="hover:text-brand-white transition-colors">Shop</Link>
@@ -137,7 +209,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`relative w-20 aspect-[4/5] rounded-lg overflow-hidden bg-brand-card border-2 transition-all duration-200 ${
+                    className={`relative w-20 aspect-[4/5] rounded-lg overflow-hidden bg-brand-card border-2 transition-all duration-150 ease-out hover:scale-[1.03] ${
                       selectedImage === i ? 'border-brand-gold' : 'border-transparent hover:border-brand-gray-600'
                     }`}
                   >
@@ -202,10 +274,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                       disabled={!color.available}
                       title={color.name}
                       className={cn(
-                        'w-8 h-8 rounded-full border-2 transition-all duration-200 relative',
+                        'w-8 h-8 rounded-full border-2 transition-all duration-200 ease-out relative',
                         selectedColor === color.name
                           ? 'border-brand-gold scale-110'
-                          : 'border-transparent hover:border-brand-gray-400',
+                          : 'border-transparent hover:border-brand-gold hover:scale-105',
                         !color.available && 'opacity-40 cursor-not-allowed'
                       )}
                       style={{ backgroundColor: color.hex }}
@@ -235,12 +307,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     key={size.label}
                     onClick={() => size.available && setSelectedSize(size.label)}
                     disabled={!size.available}
-                    className={cn(
-                      'min-w-[3rem] h-12 px-3 border rounded-lg text-sm font-medium transition-all duration-150 relative',
-                      selectedSize === size.label
-                        ? 'bg-brand-gold border-brand-gold text-brand-black shadow-gold'
-                        : size.available
-                        ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400 hover:text-brand-white'
+                      className={cn(
+                        'min-w-[3rem] h-12 px-3 border rounded-lg text-sm font-medium transition-all duration-200 ease-out relative',
+                        selectedSize === size.label
+                          ? 'bg-brand-gold border-brand-gold text-brand-black shadow-gold scale-[1.02]'
+                          : size.available
+                          ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400 hover:text-brand-white'
                         : 'border-brand-border/30 text-brand-gray-700 cursor-not-allowed'
                     )}
                   >
@@ -263,14 +335,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <div className="flex items-center border border-brand-border rounded-lg overflow-hidden">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-colors"
+                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-all duration-150 ease-out"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-12 text-center text-sm font-medium">{quantity}</span>
+                <span className="w-12 text-center text-sm font-medium leading-none">{quantity}</span>
                 <button
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-colors"
+                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-all duration-150 ease-out"
                 >
                   <Plus size={14} />
                 </button>
@@ -340,12 +412,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     className="w-full flex items-center justify-between px-4 py-4 text-sm font-medium text-brand-white hover:bg-brand-muted transition-colors"
                   >
                     {item.title}
-                    <ChevronDown
-                      size={16}
-                      className={`text-brand-gray-500 transition-transform duration-200 ${
-                        openAccordion === item.title ? 'rotate-180' : ''
-                      }`}
-                    />
+                  <ChevronDown
+                    size={16}
+                    className={`text-brand-gray-500 transition-transform duration-300 ease-out ${
+                      openAccordion === item.title ? 'rotate-180' : ''
+                    }`}
+                  />
                   </button>
                   <AnimatePresence>
                     {openAccordion === item.title && (
@@ -353,7 +425,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                         initial={{ height: 0 }}
                         animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
                         className="overflow-hidden"
                       >
                         <p className="px-4 pb-4 text-sm text-brand-gray-400 leading-relaxed">
@@ -365,6 +437,47 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-20 border-t border-brand-border pt-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+            <div>
+              <p className="text-brand-gold text-xs uppercase tracking-[0.3em]">Complete the Look</p>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-brand-white mt-2">
+                Curated to pair with {product.name}
+              </h2>
+            </div>
+            <Link href="/shop" className="text-sm text-brand-gray-400 hover:text-brand-gold transition-colors">
+              View full edit
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {RECOMMENDED_PRODUCTS.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="card-dark p-4 hover:border-brand-gold/60 hover:shadow-[0_16px_38px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-250 ease-out"
+              >
+                <div className="aspect-[4/5] rounded-lg bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
+                  <span className="text-2xl font-display gold-text opacity-30">LUXE</span>
+                </div>
+                <p className="text-brand-white font-medium mt-4">{item.name}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-brand-gold font-semibold">{formatPrice(item.price)}</span>
+                  <span className="text-xs text-brand-gray-500">
+                    {item.rating} · {item.reviewCount} reviews
+                  </span>
+                </div>
+                <Link href={`/products/${item.slug}`} className="btn-secondary w-full justify-center mt-4 py-2 text-xs">
+                  View Piece
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>

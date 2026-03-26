@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
 import { Product } from '@/types'
@@ -112,6 +112,26 @@ const tabs = ['All', 'New Arrivals', 'Bestsellers', 'Sale']
 export default function ProductShowcase() {
   const [activeTab, setActiveTab] = useState('All')
 
+  useEffect(() => {
+    const stored = localStorage.getItem('featured-tab')
+    if (stored && tabs.includes(stored)) {
+      Promise.resolve().then(() => setActiveTab(stored))
+    }
+  }, [])
+
+  const filteredProducts = useMemo(() => {
+    switch (activeTab) {
+      case 'New Arrivals':
+        return sampleProducts.filter((p) => p.tags.includes('new'))
+      case 'Bestsellers':
+        return sampleProducts.filter((p) => p.tags.includes('bestseller'))
+      case 'Sale':
+        return sampleProducts.filter((p) => Boolean(p.comparePrice))
+      default:
+        return sampleProducts
+    }
+  }, [activeTab])
+
   return (
     <section className="section-padding bg-brand-black">
       <div className="container-wide">
@@ -131,10 +151,13 @@ export default function ProductShowcase() {
             {tabs.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ${
+                onClick={() => {
+                  setActiveTab(tab)
+                  localStorage.setItem('featured-tab', tab)
+                }}
+                className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ease-out ${
                   activeTab === tab
-                    ? 'bg-brand-gold text-brand-black'
+                    ? 'bg-brand-gold text-brand-black scale-[1.02]'
                     : 'text-brand-gray-400 hover:text-brand-white'
                 }`}
               >
@@ -144,11 +167,20 @@ export default function ProductShowcase() {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {sampleProducts.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 2} />
-          ))}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+          >
+            {filteredProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} priority={i < 2} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -156,7 +188,7 @@ export default function ProductShowcase() {
           viewport={{ once: true }}
           className="flex justify-center mt-12"
         >
-          <Link href="/shop" className="btn-secondary group">
+          <Link href="/shop" className="btn-secondary group hover:shadow-[0_8px_30px_rgba(201,168,76,0.22)]">
             View All Products
             <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
           </Link>

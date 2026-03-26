@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -20,21 +20,42 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [hoveredImage, setHoveredImage] = useState(0)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
+  const [selectedColorName, setSelectedColorName] = useState(product.colors?.[0]?.name || 'Default')
+  const [addedFeedback, setAddedFeedback] = useState(false)
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
 
   const inWishlist = isInWishlist(product.id)
-  const discountPct = product.comparePrice
-    ? getDiscountPercentage(product.price, product.comparePrice)
-    : 0
+  const pricingMeta = product.comparePrice
+    ? {
+      discountPct: getDiscountPercentage(product.price, product.comparePrice),
+      savings: product.comparePrice - product.price,
+    }
+    : { discountPct: 0, savings: 0 }
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleQuickAdd = () => {
     if (!selectedSize) return
-    const defaultColor = product.colors?.[0]?.name || 'Default'
-    addItem(product, 1, selectedSize, defaultColor)
+    addItem(product, 1, selectedSize, selectedColorName)
+    setAddedFeedback(true)
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current)
+    }
+    feedbackTimeoutRef.current = setTimeout(() => setAddedFeedback(false), 1500)
     setQuickAddOpen(false)
     setSelectedSize('')
   }
+
+  const selectedSizeData = product.sizes?.find((size) => size.label === selectedSize)
+  const lowStock = selectedSizeData?.stockCount && selectedSizeData.stockCount <= 3
 
   return (
     <motion.div
@@ -51,7 +72,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             src={product.images[hoveredImage]?.url || product.images[0]?.url}
             alt={product.images[hoveredImage]?.alt || product.name}
             fill
-            className="object-cover transition-all duration-700 group-hover:scale-105"
+            className="object-cover transition-all duration-500 ease-out group-hover:scale-105"
             priority={priority}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
@@ -85,9 +106,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               New
             </span>
           )}
-          {discountPct > 0 && (
+          {pricingMeta.discountPct > 0 && (
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded uppercase">
-              -{discountPct}%
+              -{pricingMeta.discountPct}%
+            </span>
+          )}
+          {pricingMeta.savings > 0 && (
+            <span className="bg-brand-gold/95 text-brand-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+              Save ${pricingMeta.savings}
             </span>
           )}
           {!product.inStock && (
@@ -107,12 +133,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               : 'bg-brand-black/50 text-brand-gray-400 opacity-0 group-hover:opacity-100 hover:text-brand-white'
           )}
           whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.08 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
         </motion.button>
 
         {/* Quick Actions Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
           {product.inStock ? (
             quickAddOpen ? (
               <motion.div
@@ -133,18 +161,23 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                           ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                           : size.available
                           ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400'
-                          : 'border-brand-border/30 text-brand-gray-600 cursor-not-allowed line-through'
+                          : 'border-brand-border/20 text-brand-gray-700 cursor-not-allowed opacity-50 line-through'
                       )}
                     >
                       {size.label}
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2">
+                {lowStock && selectedSizeData && (
+                  <p className="text-[10px] text-amber-300 uppercase tracking-wide mb-2">
+                    Only {selectedSizeData.stockCount} left in {selectedSize}
+                  </p>
+                )}
+                <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={handleQuickAdd}
                     disabled={!selectedSize}
-                    className="flex-1 btn-primary py-2 text-xs"
+                    className="flex-1 btn-primary py-2 text-xs min-h-10"
                   >
                     Add to Cart
                   </button>
@@ -158,10 +191,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               </motion.div>
             ) : (
               <div className="flex gap-2">
-                <button
-                  onClick={(e) => { e.preventDefault(); setQuickAddOpen(true) }}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-brand-gold text-brand-black text-xs font-semibold py-2.5 rounded uppercase tracking-wide hover:bg-brand-gold-light transition-colors"
-                >
+                  <button
+                    onClick={(e) => { e.preventDefault(); setQuickAddOpen(true) }}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-brand-gold text-brand-black text-xs font-semibold py-2.5 rounded uppercase tracking-wide hover:bg-brand-gold-light transition-colors min-h-10"
+                  >
                   <ShoppingBag size={14} />
                   Quick Add
                 </button>
@@ -183,8 +216,29 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
       {/* Product Info */}
       <div className="mt-3 px-1">
+        {product.colors && product.colors.length > 1 && (
+          <div className="flex items-center gap-2 mb-2">
+            {product.colors.slice(0, 4).map((color) => (
+              <button
+                key={color.name}
+                onClick={(e) => {
+                  e.preventDefault()
+                  setSelectedColorName(color.name)
+                }}
+                title={color.name}
+                  className={cn(
+                  'w-3.5 h-3.5 rounded-full border transition-transform duration-150',
+                  selectedColorName === color.name
+                    ? 'border-brand-gold scale-110'
+                    : 'border-brand-border hover:border-brand-gray-400'
+                )}
+                style={{ backgroundColor: color.hex }}
+              />
+            ))}
+          </div>
+        )}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-sm font-medium text-brand-white hover:text-brand-gold transition-colors duration-200 truncate">
+          <h3 className="text-sm font-medium text-brand-white hover:text-brand-gold transition-colors duration-200 ease-in-out leading-tight truncate">
             {product.name}
           </h3>
         </Link>
@@ -195,6 +249,9 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             <span className="text-xs text-brand-gray-500 line-through">{formatPrice(product.comparePrice)}</span>
           )}
         </div>
+        {addedFeedback && (
+          <p className="text-[11px] text-green-400 mt-1 uppercase tracking-wide">Added to cart</p>
+        )}
       </div>
     </motion.div>
   )
