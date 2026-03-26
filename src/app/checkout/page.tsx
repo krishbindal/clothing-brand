@@ -46,10 +46,14 @@ export default function CheckoutPage() {
   const [isRazorpayReady, setIsRazorpayReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
+  const [discountCode, setDiscountCode] = useState('')
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [discountMessage, setDiscountMessage] = useState<string | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
 
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 12
   const tax = subtotal * TAX_RATE
-  const total = subtotal + shipping + tax
+  const total = Math.max(0, subtotal + shipping + tax - discountAmount)
   const labelClass = 'block text-xs text-brand-gray-500 uppercase tracking-[0.2em] mb-1.5'
 
   const {
@@ -125,6 +129,8 @@ export default function CheckoutPage() {
             tax,
             shipping,
             total,
+            discountCode,
+            discountAmount,
             email: payload.email,
             shippingAddress: payload.shippingAddress,
             userId: user?.uid,
@@ -135,8 +141,52 @@ export default function CheckoutPage() {
         console.error('Order persistence failed:', storeError)
       }
     },
-    [items, shipping, subtotal, tax, total, user?.uid],
+    [discountAmount, discountCode, items, shipping, subtotal, tax, total, user?.uid],
   )
+
+  const applyDiscount = async (codeOverride?: string) => {
+    const normalized = (codeOverride ?? discountCode).trim()
+    if (!normalized) {
+      setDiscountMessage('Enter a code to apply.')
+      setDiscountAmount(0)
+      return
+    }
+
+    setDiscountLoading(true)
+    setDiscountMessage(null)
+    try {
+      const response = await fetch('/api/discounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: normalized, subtotal }),
+      })
+      const data = (await response.json()) as {
+        valid?: boolean
+        amount?: number
+        value?: number
+        type?: 'PERCENTAGE' | 'FIXED'
+      }
+
+      if (!response.ok || !data.valid || !data.amount) {
+        setDiscountAmount(0)
+        setDiscountMessage('Code not valid or expired.')
+        return
+      }
+
+      setDiscountAmount(data.amount)
+      setDiscountCode(normalized)
+      setDiscountMessage(
+        `Applied ${normalized.toUpperCase()} — ${
+          data.type === 'PERCENTAGE' ? `${data.value}% off` : `${formatPrice(data.amount)} off`
+        }`,
+      )
+    } catch (err) {
+      console.error('Apply discount failed', err)
+      setDiscountMessage('Unable to apply code right now.')
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
 
   const onSubmit = async (payload: CheckoutFormData) => {
     if (!items.length) {
@@ -241,6 +291,24 @@ export default function CheckoutPage() {
             </h1>
             <span className="text-sm text-brand-gray-500">Secure payment powered by Razorpay</span>
           </motion.div>
+
+          <div className="card-dark border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between flex-col sm:flex-row gap-3">
+            <div>
+              <p className="text-amber-300 text-sm font-semibold uppercase tracking-[0.2em]">
+                Limited-time offer
+              </p>
+              <p className="text-sm text-brand-white">
+                Use code <span className="font-semibold">SAVE10</span> to unlock 10% off. Ends tonight.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => applyDiscount('SAVE10')}
+              className="btn-primary px-5"
+            >
+              Apply SAVE10
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
@@ -366,6 +434,36 @@ export default function CheckoutPage() {
               </div>
             </section>
 
+            <section className="card-dark p-6 space-y-3">
+              <div className="flex items-end gap-3 flex-col sm:flex-row">
+                <div className="flex-1 w-full">
+                  <label className="block text-xs text-brand-gray-500 uppercase tracking-[0.2em] mb-1.5">
+                    Discount code
+                  </label>
+                  <input
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    className="input-dark w-full"
+                    placeholder="SAVE10"
+                    autoCapitalize="characters"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void applyDiscount()}
+                  disabled={discountLoading}
+                  className="btn-secondary w-full sm:w-auto px-5"
+                >
+                  {discountLoading ? 'Applying...' : 'Apply'}
+                </button>
+              </div>
+              {discountMessage && (
+                <p className="text-xs text-brand-gray-300">
+                  {discountMessage}
+                </p>
+              )}
+            </section>
+
             {error && (
               <div className="flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
                 <AlertCircle size={16} />
@@ -460,6 +558,12 @@ export default function CheckoutPage() {
               <span>Tax</span>
               <span>{formatPrice(tax)}</span>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-emerald-300">
+                <span>Discount</span>
+                <span>-{formatPrice(discountAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-brand-white font-semibold text-base pt-2 border-t border-brand-border/40">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
@@ -469,6 +573,8 @@ export default function CheckoutPage() {
           <div className="text-xs text-brand-gray-500">
             Orders over {formatPrice(FREE_SHIPPING_THRESHOLD)} ship free. Shipping & taxes are
             estimated and finalized at payment.
+            <br />
+            Cart reservations are held for 10 minutes during this flash offer.
           </div>
         </aside>
       </div>

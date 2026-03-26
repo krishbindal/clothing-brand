@@ -648,6 +648,10 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                   ⚡ Only {selectedSizeData.stockCount} left in {selectedSize} — selling fast
                 </motion.p>
               )}
+              <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold mt-2">
+                <Flame size={14} />
+                <span>Limited-time 10% off with code SAVE10 — ends tonight.</span>
+              </div>
             </div>
 
             {/* Quantity + Add to Cart */}

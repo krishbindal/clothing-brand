@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
+import { logEvent } from '@/lib/analytics'
 
 interface ProductListItemProps {
   product: Product
@@ -11,6 +12,13 @@ interface ProductListItemProps {
 }
 
 export default function ProductListItem({ product, index }: ProductListItemProps) {
+  const handleClick = () =>
+    logEvent('PRODUCT_CLICK', {
+      path: typeof window !== 'undefined' ? window.location.pathname : '/',
+      productId: product.id,
+      metadata: { price: product.price, category: product.category },
+    }).catch(() => null)
+
   return (
     <motion.div
       key={product.id}
@@ -22,13 +30,14 @@ export default function ProductListItem({ product, index }: ProductListItemProps
       <Link
         prefetch
         href={`/products/${product.slug}`}
+        onClick={handleClick}
         className="w-28 h-36 bg-gradient-to-br from-brand-card to-brand-muted rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
       >
         <span className="text-sm font-display gold-text opacity-20 tracking-widest">LUXE</span>
       </Link>
       <div className="flex-1 flex flex-col justify-between py-1">
         <div>
-          <Link prefetch href={`/products/${product.slug}`}>
+          <Link prefetch href={`/products/${product.slug}`} onClick={handleClick}>
             <h3 className="font-medium text-brand-white hover:text-brand-gold transition-colors duration-300">
               {product.name}
             </h3>
@@ -45,7 +54,12 @@ export default function ProductListItem({ product, index }: ProductListItemProps
               </span>
             )}
           </div>
-          <Link prefetch href={`/products/${product.slug}`} className="btn-primary py-1.5 px-5 text-[10px]">
+          <Link
+            prefetch
+            href={`/products/${product.slug}`}
+            onClick={handleClick}
+            className="btn-primary py-1.5 px-5 text-[10px]"
+          >
             View
           </Link>
         </div>

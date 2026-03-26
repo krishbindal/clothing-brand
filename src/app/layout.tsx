@@ -7,6 +7,7 @@ import LenisProvider from '@/components/providers/LenisProvider'
 import Navbar from '@/components/layout/Navbar'
 import CartDrawer from '@/components/cart/CartDrawer'
 import { Toaster } from '@/components/ui/Toaster'
+import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 
 export const metadata: Metadata = {
   title: {
@@ -52,6 +53,7 @@ export default function RootLayout({
                 <main>{children}</main>
                 <CartDrawer />
                 <Toaster />
+                <AnalyticsTracker />
               </LenisProvider>
             </WishlistProvider>
           </CartProvider>
