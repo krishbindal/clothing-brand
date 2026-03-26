@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllProducts, getFeaturedProducts, getProductBySlug } from '@/lib/sanity'
 
