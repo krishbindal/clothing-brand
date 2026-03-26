@@ -38,5 +38,5 @@ export function getDiscountPercentage(price: number, comparePrice: number): numb
 }
 
 export function generateOrderId(): string {
-  return `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+  return `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`
 }
