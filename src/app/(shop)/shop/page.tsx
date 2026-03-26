@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import ProductGrid from '@/components/shop/ProductGrid'
@@ -13,14 +13,13 @@ import MobileFilters from '@/components/shop/MobileFilters'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { useShopFilters } from '@/hooks/useShopFilters'
-import { LOADING_TIMEOUT_MS, PRICE_RANGE } from '@/lib/shop'
-import { Product } from '@/types'
+import { CATEGORIES, PRICE_RANGE } from '@/lib/shop'
+import { useProducts, useCategories } from '@/hooks'
 
 export default function ShopPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const { products, isLoading, error, refetch } = useProducts()
+  const { categories } = useCategories()
 
   const {
     filters,
@@ -38,33 +37,12 @@ export default function ShopPage() {
     clearFilters,
   } = useShopFilters(products)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const safetyTimeout = setTimeout(() => setIsLoading(false), LOADING_TIMEOUT_MS)
-
-    async function loadProducts() {
-      try {
-        const response = await fetch('/api/products', { signal: controller.signal })
-        if (!response.ok) throw new Error('Failed to load products')
-        const payload = (await response.json()) as { products: Product[] }
-        setProducts(payload.products || [])
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          setProducts([])
-          setLoadError('Unable to fetch products right now. Please try again soon.')
-        }
-      } finally {
-        setIsLoading(false)
-        clearTimeout(safetyTimeout)
-      }
+  const categoryOptions = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories.map((category) => category.name)
     }
-
-    void loadProducts()
-    return () => {
-      controller.abort()
-      clearTimeout(safetyTimeout)
-    }
-  }, [])
+    return CATEGORIES.filter((category) => category !== 'all')
+  }, [categories])
 
   const onClearSearch = () => setSearchQuery('')
 
@@ -75,14 +53,14 @@ export default function ShopPage() {
       return <ProductGridSkeleton count={6} />
     }
 
-    if (loadError) {
+    if (error) {
       return (
         <EmptyState
           icon={Search}
           title="Something went wrong"
-          description={loadError}
+          description={error}
           actionLabel="Refresh"
-          onAction={() => window.location.reload()}
+          onAction={() => refetch()}
         />
       )
     }
@@ -127,6 +105,7 @@ export default function ShopPage() {
           <FiltersSidebar
             filters={filters}
             hasActiveFilters={hasActiveFilters}
+            categories={categoryOptions}
             onToggleCategory={toggleCategory}
             onToggleSize={toggleSize}
             onToggleStock={toggleInStock}
@@ -166,6 +145,7 @@ export default function ShopPage() {
         open={filtersOpen}
         filters={filters}
         onClose={() => setFiltersOpen(false)}
+        categories={categoryOptions}
         onToggleCategory={toggleCategory}
         onToggleSize={toggleSize}
         onApply={() => setFiltersOpen(false)}

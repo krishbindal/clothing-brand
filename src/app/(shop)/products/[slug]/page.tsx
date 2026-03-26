@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,10 +8,10 @@ import { Heart, Share2, ChevronDown, Truck, RotateCcw, Shield, Star, Minus, Plus
 import { useCart } from '@/contexts/CartContext'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { formatPrice, getDiscountPercentage } from '@/lib/utils'
-import { Product } from '@/types'
 import { cn } from '@/lib/utils'
 import ProductCard from '@/components/shop/ProductCard'
 import ImageZoom from '@/components/ui/ImageZoom'
+import { useProducts } from '@/hooks'
 const accordionData = [
   {
     title: 'Details & Materials',
@@ -29,13 +29,10 @@ const accordionData = [
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const router = useRouter()
-  const [product, setProduct] = useState<Product | null>(null)
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { product, featuredProducts, isLoading, error, refetch } = useProducts({ slug: params.slug })
 
   const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedSize, setSelectedSize] = useState('')
-  const [selectedColor, setSelectedColor] = useState('')
+  const [selection, setSelection] = useState({ slug: '', color: '', size: '' })
   const [quantity, setQuantity] = useState(1)
   const [openAccordion, setOpenAccordion] = useState<string | null>(null)
   const [addedToCart, setAddedToCart] = useState(false)
@@ -44,10 +41,19 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
   const inWishlist = product ? isInWishlist(product.id) : false
+  const selectedColor =
+    selection.slug === product?.slug ? selection.color : product?.colors?.[0]?.name || ''
+  const selectedSize =
+    selection.slug === product?.slug ? selection.size : product?.sizes?.[0]?.label || ''
 
   const discount = product?.comparePrice
     ? getDiscountPercentage(product.price, product.comparePrice)
     : 0
+
+  const recommendedProducts = useMemo(
+    () => (featuredProducts || []).filter((item) => item.slug !== product?.slug).slice(0, 4),
+    [featuredProducts, product?.slug],
+  )
 
   const handleAddToCart = () => {
     if (!product || !selectedSize) return
@@ -60,58 +66,36 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   }
 
   useEffect(() => {
-    let mounted = true
-    const controller = new AbortController()
-
-    async function loadProduct() {
-      const { slug } = params
-      try {
-        const response = await fetch(`/api/products?slug=${encodeURIComponent(slug)}`, {
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error('Failed to load product')
-        const payload = (await response.json()) as { product: Product | null; featuredProducts: Product[] }
-        if (!mounted) return
-        if (!payload.product) {
-          router.replace('/shop')
-          return
-        }
-        setProduct(payload.product)
-        setRecommendedProducts(
-          (payload.featuredProducts || [])
-            .filter((item) => item.slug !== payload.product?.slug)
-            .slice(0, 4)
-        )
-        setSelectedColor(payload.product?.colors?.[0]?.name || '')
-        setSelectedSize(payload.product?.sizes?.[0]?.label || '')
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          if (mounted) {
-            router.replace('/shop')
-          }
-        }
-      } finally {
-        if (mounted) setIsLoading(false)
-      }
+    if (!isLoading && !product) {
+      router.replace('/shop')
     }
+  }, [isLoading, product, router])
 
-    void loadProduct()
-
+  useEffect(() => {
     return () => {
-      mounted = false
-      controller.abort()
       if (addFeedbackTimeoutRef.current) {
         clearTimeout(addFeedbackTimeoutRef.current)
       }
     }
-  }, [params, router])
+  }, [])
 
   if (isLoading) {
     return <div className="min-h-screen bg-brand-black pt-20" />
   }
 
   if (!product) {
-    return <div className="min-h-screen bg-brand-black pt-20 text-brand-gray-300 px-4">Product unavailable. Please try again.</div>
+    return (
+      <div className="min-h-screen bg-brand-black pt-20 text-brand-gray-300 px-4">
+        Product unavailable. {error || 'Please try again.'}
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="ml-3 underline text-brand-gold hover:text-brand-gold-light"
+        >
+          Retry
+        </button>
+      </div>
+    )
   }
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
@@ -273,7 +257,13 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                   {product.colors.map((color) => (
                     <button
                       key={color.name}
-                      onClick={() => setSelectedColor(color.name)}
+                      onClick={() =>
+                        setSelection((prev) => ({
+                          ...prev,
+                          slug: product.slug,
+                          color: color.name,
+                        }))
+                      }
                       disabled={!color.available}
                       title={color.name}
                       className={cn(
@@ -308,7 +298,14 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                 {product.sizes?.map((size) => (
                   <button
                     key={size.label}
-                    onClick={() => size.available && setSelectedSize(size.label)}
+                    onClick={() =>
+                      size.available &&
+                      setSelection((prev) => ({
+                        ...prev,
+                        slug: product.slug,
+                        size: size.label,
+                      }))
+                    }
                     disabled={!size.available}
                     className={cn(
                       'min-w-[3.5rem] h-12 px-4 border rounded-lg text-sm font-medium transition-all duration-300 ease-luxury relative',
