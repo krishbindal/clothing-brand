@@ -13,38 +13,41 @@ interface WishlistContextType {
 
 const WishlistContext = createContext<WishlistContextType | null>(null)
 
+const readLocalWishlist = (): string[] => {
+  const stored = localStorage.getItem('wishlist')
+  if (!stored) return []
+  try {
+    return JSON.parse(stored) as string[]
+  } catch {
+    return []
+  }
+}
+
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
-  const [wishlistIds, setWishlistIds] = useState<string[]>([])
+  const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return readLocalWishlist()
+  })
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetchWishlist()
+      void fetch('/api/wishlist')
+        .then(async (response) => {
+          if (!response.ok) return []
+          const data = (await response.json()) as { productId: string }[]
+          return data.map((item) => item.productId)
+        })
+        .then((ids) => setWishlistIds(ids))
+        .catch(() => {
+          // Silently fail
+        })
     } else {
-      const stored = localStorage.getItem('wishlist')
-      if (stored) {
-        try {
-          setWishlistIds(JSON.parse(stored))
-        } catch {
-          setWishlistIds([])
-        }
-      }
+      const localIds = readLocalWishlist()
+      queueMicrotask(() => setWishlistIds(localIds))
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
-
-  async function fetchWishlist() {
-    try {
-      const response = await fetch('/api/wishlist')
-      if (response.ok) {
-        const data = (await response.json()) as { productId: string }[]
-        setWishlistIds(data.map((item) => item.productId))
-      }
-    } catch {
-      // Silently fail
-    }
-  }
 
   const isInWishlist = (productId: string) => wishlistIds.includes(productId)
 
