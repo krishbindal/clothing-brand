@@ -72,7 +72,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             src={product.images[hoveredImage]?.url || product.images[0]?.url}
             alt={product.images[hoveredImage]?.alt || product.name}
             fill
-            className="object-cover transition-all duration-700 group-hover:scale-105"
+            className="object-cover transition-all duration-500 ease-out group-hover:scale-105"
             priority={priority}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
@@ -134,12 +134,13 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           )}
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.08 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
         </motion.button>
 
         {/* Quick Actions Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
           {product.inStock ? (
             quickAddOpen ? (
               <motion.div
@@ -160,7 +161,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                           ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
                           : size.available
                           ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400'
-                          : 'border-brand-border/30 text-brand-gray-600 cursor-not-allowed line-through'
+                          : 'border-brand-border/20 text-brand-gray-700 cursor-not-allowed opacity-50 line-through'
                       )}
                     >
                       {size.label}
@@ -172,11 +173,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                     Only {selectedSizeData.stockCount} left in {selectedSize}
                   </p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={handleQuickAdd}
                     disabled={!selectedSize}
-                    className="flex-1 btn-primary py-2 text-xs"
+                    className="flex-1 btn-primary py-2 text-xs min-h-10"
                   >
                     Add to Cart
                   </button>
@@ -190,10 +191,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               </motion.div>
             ) : (
               <div className="flex gap-2">
-                <button
-                  onClick={(e) => { e.preventDefault(); setQuickAddOpen(true) }}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-brand-gold text-brand-black text-xs font-semibold py-2.5 rounded uppercase tracking-wide hover:bg-brand-gold-light transition-colors"
-                >
+                  <button
+                    onClick={(e) => { e.preventDefault(); setQuickAddOpen(true) }}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-brand-gold text-brand-black text-xs font-semibold py-2.5 rounded uppercase tracking-wide hover:bg-brand-gold-light transition-colors min-h-10"
+                  >
                   <ShoppingBag size={14} />
                   Quick Add
                 </button>
@@ -225,8 +226,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                   setSelectedColorName(color.name)
                 }}
                 title={color.name}
-                className={cn(
-                  'w-3.5 h-3.5 rounded-full border transition-transform',
+                  className={cn(
+                  'w-3.5 h-3.5 rounded-full border transition-transform duration-150',
                   selectedColorName === color.name
                     ? 'border-brand-gold scale-110'
                     : 'border-brand-border hover:border-brand-gray-400'
@@ -237,7 +238,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
         )}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-sm font-medium text-brand-white hover:text-brand-gold transition-colors duration-200 truncate">
+          <h3 className="text-sm font-medium text-brand-white hover:text-brand-gold transition-colors duration-200 ease-in-out leading-tight truncate">
             {product.name}
           </h3>
         </Link>

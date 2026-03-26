@@ -60,6 +60,7 @@ export default function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             onClick={closeCart}
           />
@@ -70,10 +71,10 @@ export default function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-brand-dark border-l border-brand-border z-50 flex flex-col"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-brand-dark border-l border-brand-border/80 z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-brand-border">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-brand-border bg-gradient-to-b from-brand-dark to-brand-dark/90">
               <div className="flex items-center gap-3">
                 <ShoppingBag size={20} className="text-brand-gold" />
                 <h2 className="text-lg font-semibold tracking-wide">Your Cart</h2>
@@ -108,7 +109,7 @@ export default function CartDrawer() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: 100 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="flex gap-4 py-4 border-b border-brand-border/50 last:border-0"
                     >
                       {/* Image */}
@@ -139,14 +140,14 @@ export default function CartDrawer() {
                           <div className="flex items-center gap-2 border border-brand-border rounded">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white transition-colors"
+                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:scale-[1.05] transition-all duration-150 ease-out"
                             >
                               <Minus size={12} />
                             </button>
                             <span className="text-sm w-6 text-center">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1.5 text-brand-gray-400 hover:text-brand-white transition-colors"
+                              className="p-1.5 text-brand-gray-400 hover:text-brand-white hover:scale-[1.05] transition-all duration-150 ease-out"
                             >
                               <Plus size={12} />
                             </button>
@@ -175,7 +176,7 @@ export default function CartDrawer() {
                   </div>
                   <div className="w-full h-1.5 bg-brand-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-brand-gold to-brand-gold-light transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-brand-gold to-brand-gold-light transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -188,13 +189,13 @@ export default function CartDrawer() {
 
                 <div className="space-y-2">
                   <p className="text-xs uppercase tracking-[0.2em] text-brand-gray-500">Complete the look</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                     {CART_RECOMMENDATIONS.map((product) => (
                       <Link
                         key={product.id}
                         href={`/products/${product.slug}`}
                         onClick={closeCart}
-                        className="rounded-lg border border-brand-border bg-brand-card p-2 hover:border-brand-gold/40 transition-colors"
+                        className="rounded-lg border border-brand-border bg-brand-card p-2.5 sm:p-3 hover:border-brand-gold/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition-all duration-250 ease-out"
                       >
                         <div className="relative w-full h-16 rounded bg-brand-muted overflow-hidden">
                           {product.images[0]?.url ? (

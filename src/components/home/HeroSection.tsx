@@ -35,11 +35,11 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_75%,rgba(201,168,76,0.08),transparent_30%)]" />
         <motion.div
           style={{ y: overlayY }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[640px] bg-brand-gold/10 rounded-full blur-[160px]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[640px] bg-brand-gold/10 rounded-full blur-[160px] shadow-[0_0_140px_rgba(201,168,76,0.2)]"
         />
         <motion.div
           animate={{ opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 5, repeat: Infinity, ease: [0.22, 1, 0.36, 1] }}
           className="absolute top-20 left-1/2 -translate-x-1/2 w-[420px] h-[220px] rounded-full border border-brand-gold/20"
         />
       </motion.div>
@@ -53,7 +53,7 @@ export default function HeroSection() {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="inline-flex items-center gap-2 text-brand-gold text-xs font-bold uppercase tracking-[0.4em] mb-6 px-4 py-2 rounded-full border border-brand-gold/30 bg-brand-gold/5"
         >
           <Sparkles size={12} />
@@ -76,7 +76,7 @@ export default function HeroSection() {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-brand-gray-300 text-base sm:text-lg max-w-2xl mx-auto mt-6 leading-relaxed"
         >
           Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force.
@@ -86,12 +86,15 @@ export default function HeroSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
+          transition={{ duration: 0.8, delay: 1, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
         >
           <Link href="/shop" className="btn-primary group min-w-[220px]">
             Shop the Drop
-            <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
+            <ArrowRight
+              size={16}
+              className="transition-transform duration-200 ease-out group-hover:translate-x-1.5"
+            />
           </Link>
           <Link href="/collections" className="btn-secondary min-w-[220px]">
             Discover the Atelier
@@ -102,8 +105,8 @@ export default function HeroSection() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.4 }}
-          className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 mt-14"
+          transition={{ duration: 1, delay: 1.4, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mt-14"
         >
           {[
             { value: '10K+', label: 'Customers' },
@@ -113,7 +116,7 @@ export default function HeroSection() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="text-center min-w-[110px] rounded-lg border border-brand-border bg-brand-dark/60 px-4 py-3 backdrop-blur-sm"
+              className="text-center min-w-[100px] sm:min-w-[130px] rounded-lg border border-brand-border bg-brand-dark/60 px-4 py-3 backdrop-blur-sm"
             >
               <div className="text-2xl sm:text-3xl font-display font-bold gold-text tracking-tight">{stat.value}</div>
               <div className="text-xs text-brand-gray-500 uppercase tracking-wider mt-1">{stat.label}</div>
@@ -132,7 +135,7 @@ export default function HeroSection() {
         <span className="text-xs text-brand-gray-500 uppercase tracking-[0.3em]">Scroll</span>
         <motion.div
           animate={{ y: [0, 8, 0], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: 0.3, ease: 'easeInOut' }}
           className="p-2 rounded-full border border-brand-border bg-brand-dark/60"
         >
           <ArrowDown size={16} className="text-brand-gold/80" />

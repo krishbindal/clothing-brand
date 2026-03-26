@@ -41,7 +41,7 @@ export default function StorySection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
-              className="absolute -bottom-6 -right-6 bg-brand-card border border-brand-border rounded-xl p-5 max-w-[200px]"
+              className="absolute -bottom-6 -right-6 bg-brand-card border border-brand-border rounded-xl p-5 max-w-[200px] transition-all duration-300 hover:shadow-[0_16px_45px_rgba(0,0,0,0.45)] hover:border-brand-gold/40"
             >
               <p className="text-3xl font-display font-bold gold-text">2019</p>
               <p className="text-sm text-brand-gray-400 mt-1">Founded in the heart of darkness</p>
@@ -50,7 +50,7 @@ export default function StorySection() {
             <div className="relative mt-14 border border-brand-border rounded-xl bg-brand-dark/60 p-5 backdrop-blur-sm">
               <motion.div
                 style={{ scaleY: lineScale }}
-                className="absolute left-8 top-10 bottom-10 w-px bg-brand-gold/50 origin-top"
+                className="absolute left-5 top-10 bottom-10 w-px bg-brand-gold/50 origin-top"
               />
               <div className="space-y-5">
                 {milestones.map((item, i) => (
@@ -60,12 +60,12 @@ export default function StorySection() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 * i }}
-                    className="relative pl-12"
+                    className="relative pl-10"
                   >
-                    <span className="absolute left-6 top-1.5 w-4 h-4 rounded-full border border-brand-gold/40 bg-brand-black" />
+                    <span className="absolute left-4 top-1.5 w-4 h-4 rounded-full border border-brand-gold/40 bg-brand-black" />
                     <p className="text-[11px] uppercase tracking-[0.25em] text-brand-gold">{item.year}</p>
-                    <p className="text-brand-white text-sm font-semibold mt-1">{item.title}</p>
-                    <p className="text-brand-gray-500 text-xs mt-1">{item.note}</p>
+                    <p className="text-brand-white text-sm leading-relaxed font-semibold mt-1">{item.title}</p>
+                    <p className="text-brand-gray-500 text-xs leading-relaxed mt-1">{item.note}</p>
                   </motion.div>
                 ))}
               </div>
@@ -101,7 +101,7 @@ export default function StorySection() {
               transition={{ delay: 0.2 }}
               className="space-y-4 text-brand-gray-400 leading-relaxed"
             >
-              <p className="text-brand-gold/90 italic border-l-2 border-brand-gold/40 pl-4">
+              <p className="text-brand-gold/90 italic border-l-4 border-brand-gold/60 pl-4">
                 &quot;Luxury is not volume. It&apos;s conviction, restraint, and detail that lasts.&quot;
               </p>
               <p>
@@ -139,7 +139,7 @@ export default function StorySection() {
             >
               <Link href="/about" className="btn-secondary inline-flex group">
                 Read Our Story
-                <span className="inline-block w-0 group-hover:w-6 h-px bg-brand-gold transition-all duration-300" />
+                <span className="inline-block w-0 group-hover:w-8 h-px bg-brand-gold transition-all duration-200 ease-out" />
               </Link>
             </motion.div>
           </div>

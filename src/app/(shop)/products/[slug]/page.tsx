@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -138,6 +138,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [quantity, setQuantity] = useState(1)
   const [openAccordion, setOpenAccordion] = useState<string | null>(null)
   const [addedToCart, setAddedToCart] = useState(false)
+  const addFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
@@ -147,8 +148,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     if (!selectedSize) return
     addItem(product, quantity, selectedSize, selectedColor)
     setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2000)
+    if (addFeedbackTimeoutRef.current) {
+      clearTimeout(addFeedbackTimeoutRef.current)
+    }
+    addFeedbackTimeoutRef.current = setTimeout(() => setAddedToCart(false), 2000)
   }
+
+  useEffect(() => {
+    return () => {
+      if (addFeedbackTimeoutRef.current) {
+        clearTimeout(addFeedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
   const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3
@@ -157,7 +169,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     <div className="min-h-screen bg-brand-black pt-20">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <nav className="flex items-center gap-2 text-xs text-brand-gray-500">
+        <nav className="flex items-center gap-2.5 text-xs leading-relaxed text-brand-gray-500">
           <Link href="/" className="hover:text-brand-white transition-colors">Home</Link>
           <span>/</span>
           <Link href="/shop" className="hover:text-brand-white transition-colors">Shop</Link>
@@ -197,7 +209,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`relative w-20 aspect-[4/5] rounded-lg overflow-hidden bg-brand-card border-2 transition-all duration-200 ${
+                    className={`relative w-20 aspect-[4/5] rounded-lg overflow-hidden bg-brand-card border-2 transition-all duration-150 ease-out hover:scale-[1.03] ${
                       selectedImage === i ? 'border-brand-gold' : 'border-transparent hover:border-brand-gray-600'
                     }`}
                   >
@@ -262,10 +274,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                       disabled={!color.available}
                       title={color.name}
                       className={cn(
-                        'w-8 h-8 rounded-full border-2 transition-all duration-200 relative',
+                        'w-8 h-8 rounded-full border-2 transition-all duration-200 ease-out relative',
                         selectedColor === color.name
                           ? 'border-brand-gold scale-110'
-                          : 'border-transparent hover:border-brand-gray-400',
+                          : 'border-transparent hover:border-brand-gold hover:scale-105',
                         !color.available && 'opacity-40 cursor-not-allowed'
                       )}
                       style={{ backgroundColor: color.hex }}
@@ -295,12 +307,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     key={size.label}
                     onClick={() => size.available && setSelectedSize(size.label)}
                     disabled={!size.available}
-                    className={cn(
-                      'min-w-[3rem] h-12 px-3 border rounded-lg text-sm font-medium transition-all duration-150 relative',
-                      selectedSize === size.label
-                        ? 'bg-brand-gold border-brand-gold text-brand-black shadow-gold'
-                        : size.available
-                        ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400 hover:text-brand-white'
+                      className={cn(
+                        'min-w-[3rem] h-12 px-3 border rounded-lg text-sm font-medium transition-all duration-200 ease-out relative',
+                        selectedSize === size.label
+                          ? 'bg-brand-gold border-brand-gold text-brand-black shadow-gold scale-[1.02]'
+                          : size.available
+                          ? 'border-brand-border text-brand-gray-300 hover:border-brand-gray-400 hover:text-brand-white'
                         : 'border-brand-border/30 text-brand-gray-700 cursor-not-allowed'
                     )}
                   >
@@ -323,14 +335,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <div className="flex items-center border border-brand-border rounded-lg overflow-hidden">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-colors"
+                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-all duration-150 ease-out"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-12 text-center text-sm font-medium">{quantity}</span>
+                <span className="w-12 text-center text-sm font-medium leading-none">{quantity}</span>
                 <button
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-colors"
+                  className="w-12 h-12 flex items-center justify-center text-brand-gray-400 hover:text-brand-white hover:bg-brand-muted transition-all duration-150 ease-out"
                 >
                   <Plus size={14} />
                 </button>
@@ -400,12 +412,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     className="w-full flex items-center justify-between px-4 py-4 text-sm font-medium text-brand-white hover:bg-brand-muted transition-colors"
                   >
                     {item.title}
-                    <ChevronDown
-                      size={16}
-                      className={`text-brand-gray-500 transition-transform duration-200 ${
-                        openAccordion === item.title ? 'rotate-180' : ''
-                      }`}
-                    />
+                  <ChevronDown
+                    size={16}
+                    className={`text-brand-gray-500 transition-transform duration-300 ease-out ${
+                      openAccordion === item.title ? 'rotate-180' : ''
+                    }`}
+                  />
                   </button>
                   <AnimatePresence>
                     {openAccordion === item.title && (
@@ -413,7 +425,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                         initial={{ height: 0 }}
                         animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
                         className="overflow-hidden"
                       >
                         <p className="px-4 pb-4 text-sm text-brand-gray-400 leading-relaxed">
@@ -449,7 +461,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="card-dark p-4 hover:border-brand-gold/40 transition-colors"
+                className="card-dark p-4 hover:border-brand-gold/60 hover:shadow-[0_16px_38px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-250 ease-out"
               >
                 <div className="aspect-[4/5] rounded-lg bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
                   <span className="text-2xl font-display gold-text opacity-30">LUXE</span>

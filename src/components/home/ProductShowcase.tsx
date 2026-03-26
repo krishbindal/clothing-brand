@@ -115,8 +115,7 @@ export default function ProductShowcase() {
   useEffect(() => {
     const stored = localStorage.getItem('featured-tab')
     if (stored && tabs.includes(stored)) {
-      const timeout = window.setTimeout(() => setActiveTab(stored), 0)
-      return () => window.clearTimeout(timeout)
+      Promise.resolve().then(() => setActiveTab(stored))
     }
   }, [])
 
@@ -156,9 +155,9 @@ export default function ProductShowcase() {
                   setActiveTab(tab)
                   localStorage.setItem('featured-tab', tab)
                 }}
-                className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ${
+                className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 ease-out ${
                   activeTab === tab
-                    ? 'bg-brand-gold text-brand-black'
+                    ? 'bg-brand-gold text-brand-black scale-[1.02]'
                     : 'text-brand-gray-400 hover:text-brand-white'
                 }`}
               >
@@ -173,9 +172,9 @@ export default function ProductShowcase() {
             key={activeTab}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
           >
             {filteredProducts.map((product, i) => (
               <ProductCard key={product.id} product={product} priority={i < 2} />
@@ -189,7 +188,7 @@ export default function ProductShowcase() {
           viewport={{ once: true }}
           className="flex justify-center mt-12"
         >
-          <Link href="/shop" className="btn-secondary group">
+          <Link href="/shop" className="btn-secondary group hover:shadow-[0_8px_30px_rgba(201,168,76,0.22)]">
             View All Products
             <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
           </Link>
