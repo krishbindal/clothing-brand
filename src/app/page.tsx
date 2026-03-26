@@ -3,6 +3,7 @@ import HeroSection from '@/components/home/HeroSection'
 import Footer from '@/components/layout/Footer'
 import ProductGrid from '@/components/shop/ProductGrid'
 import PersonalizedRail from '@/components/home/PersonalizedRail'
+import DynamicSpotlight from '@/components/home/DynamicSpotlight'
 import { getAllProducts } from '@/lib/sanity'
 
 export const revalidate = 60
@@ -27,6 +28,8 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection title="WEAR THE FUTURE" subtitle="Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force." />
+
+      <DynamicSpotlight products={safeProducts} />
       
       <section className="bg-brand-black border-t border-brand-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-14">
@@ -62,7 +65,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <PersonalizedRail fallback={safeProducts} />
+      <PersonalizedRail fallback={safeProducts} catalog={safeProducts} />
 
       <Footer />
     </>

@@ -20,6 +20,7 @@ export default function ProductListItem({ product, index }: ProductListItemProps
       className="group flex gap-5 card-dark p-4 hover:border-brand-gold/20 transition-all duration-400"
     >
       <Link
+        prefetch
         href={`/products/${product.slug}`}
         className="w-28 h-36 bg-gradient-to-br from-brand-card to-brand-muted rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
       >
@@ -27,7 +28,7 @@ export default function ProductListItem({ product, index }: ProductListItemProps
       </Link>
       <div className="flex-1 flex flex-col justify-between py-1">
         <div>
-          <Link href={`/products/${product.slug}`}>
+          <Link prefetch href={`/products/${product.slug}`}>
             <h3 className="font-medium text-brand-white hover:text-brand-gold transition-colors duration-300">
               {product.name}
             </h3>
@@ -44,7 +45,7 @@ export default function ProductListItem({ product, index }: ProductListItemProps
               </span>
             )}
           </div>
-          <Link href={`/products/${product.slug}`} className="btn-primary py-1.5 px-5 text-[10px]">
+          <Link prefetch href={`/products/${product.slug}`} className="btn-primary py-1.5 px-5 text-[10px]">
             View
           </Link>
         </div>

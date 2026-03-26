@@ -22,6 +22,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   return (
     <div className="group relative">
       <Link
+        prefetch
         href={`/products/${product.slug}`}
         className="block w-full overflow-hidden bg-brand-card rounded-lg border border-brand-border/40 transition-all duration-500 hover:border-brand-gold/40 hover:shadow-card-hover"
       >
@@ -46,6 +47,18 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           {lowStock && (
             <span className="absolute top-4 left-4 z-10 bg-amber-500/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em]">
               Low stock
+            </span>
+          )}
+
+          {product.tags?.includes('trending') && (
+            <span className="absolute top-4 right-4 z-10 bg-brand-gold text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.25em] shadow-gold-subtle">
+              Trending
+            </span>
+          )}
+
+          {product.tags?.includes('hot') && (
+            <span className="absolute bottom-4 left-4 z-10 bg-red-500/90 text-white text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.25em]">
+              Hot Drop
             </span>
           )}
 
@@ -114,6 +127,13 @@ export default function ProductCard({ product, priority = false }: { product: Pr
             inWishlist ? 'text-brand-gold fill-brand-gold' : 'text-brand-white'
           }`}
         />
+        {inWishlist && (
+          <motion.span
+            layoutId={`wishlist-pulse-${product.id}`}
+            className="absolute inset-0 rounded-full bg-brand-gold/10 animate-ping"
+            aria-hidden
+          />
+        )}
       </motion.button>
 
       <motion.button
