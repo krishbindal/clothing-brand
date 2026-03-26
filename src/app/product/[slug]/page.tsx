@@ -35,7 +35,7 @@ export default async function ProductDetailPage({ params }: Props) {
           {/* Gallery - 1 Column flowing down */}
           <div className="space-y-4">
             {product.images?.length > 0 ? (
-              product.images.map((img: any, idx: number) => (
+              product.images.map((img, idx) => (
                 <div key={idx} className="relative aspect-[4/5] bg-brand-card rounded-lg overflow-hidden border border-brand-border/30">
                   <Image 
                     src={img.url} 
@@ -84,7 +84,7 @@ export default async function ProductDetailPage({ params }: Props) {
                       <button className="text-brand-gray-500 underline underline-offset-4 hover:text-brand-white transition-colors">Size Guide</button>
                     </p>
                     <div className="flex flex-wrap gap-3">
-                      {product.sizes.map((s: any) => (
+                      {product.sizes.map((s) => (
                         <button 
                           key={s.label} 
                           disabled={!s.available} 
@@ -106,7 +106,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <div className="space-y-4">
                     <p className="text-xs uppercase tracking-widest text-brand-gray-400 font-semibold">Select Color</p>
                     <div className="flex flex-wrap gap-3">
-                      {product.colors.map((c: any) => (
+                      {product.colors.map((c) => (
                         <button 
                           key={c.name} 
                           title={c.name}
