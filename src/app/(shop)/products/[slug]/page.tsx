@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils'
 import ProductCard from '@/components/shop/ProductCard'
 import ImageZoom from '@/components/ui/ImageZoom'
 import { useProducts } from '@/hooks'
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 const accordionData = [
   {
     title: 'Details & Materials',
@@ -30,6 +32,7 @@ const accordionData = [
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const router = useRouter()
   const { product, featuredProducts, isLoading, error, refetch } = useProducts({ slug: params.slug })
+  const { addProduct, recentlyViewed, isLoaded: recentsLoaded } = useRecentlyViewed()
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [selection, setSelection] = useState({ slug: '', color: '', size: '' })
@@ -54,6 +57,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
     () => (featuredProducts || []).filter((item) => item.slug !== product?.slug).slice(0, 4),
     [featuredProducts, product?.slug],
   )
+
+  useEffect(() => {
+    if (product) {
+      addProduct(product)
+    }
+  }, [addProduct, product])
 
   const handleAddToCart = () => {
     if (!product || !selectedSize) return
@@ -100,6 +109,10 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
   const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3
+  const productImages =
+    product?.images?.length && product.images.length > 0
+      ? product.images
+      : [{ url: '', alt: product?.name || 'Product image', width: 800, height: 1000 }]
 
   return (
     <div className="min-h-screen bg-brand-black pt-20">
@@ -131,19 +144,28 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={selectedImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0.9, scale: 0.99 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="w-full h-full bg-gradient-to-br from-brand-card via-brand-muted to-brand-darker flex items-center justify-center"
+                    className="relative w-full h-full"
                   >
-                    <motion.span
-                      className="text-5xl font-display font-bold gold-text tracking-[0.3em] opacity-15 select-none"
-                      animate={{ scale: [1, 1.02, 1] }}
-                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      LUXE
-                    </motion.span>
+                    {productImages[selectedImage]?.url ? (
+                      <Image
+                        src={productImages[selectedImage].url}
+                        alt={productImages[selectedImage].alt || product.name}
+                        fill
+                        priority={selectedImage === 0}
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-brand-card via-brand-muted to-brand-darker flex items-center justify-center">
+                        <span className="text-5xl font-display font-bold gold-text tracking-[0.3em] opacity-15 select-none">
+                          LUXE
+                        </span>
+                      </div>
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </ImageZoom>
@@ -170,9 +192,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             </div>
 
             {/* Thumbnails */}
-            {product.images?.length > 1 && (
+            {productImages.length > 1 && (
               <div className="flex gap-2.5">
-                {product.images.map((img, i) => (
+                {productImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
@@ -183,9 +205,19 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                         : 'border-transparent hover:border-brand-gray-600'
                     )}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
-                      <span className="text-[8px] font-display gold-text opacity-20 tracking-widest">LUXE</span>
-                    </div>
+                    {img.url ? (
+                      <Image
+                        src={img.url}
+                        alt={img.alt || product.name}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-brand-card to-brand-muted flex items-center justify-center">
+                        <span className="text-[8px] font-display gold-text opacity-20 tracking-widest">LUXE</span>
+                      </div>
+                    )}
                     <span className="sr-only">{img.alt}</span>
                   </button>
                 ))}
@@ -490,6 +522,64 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             ))}
           </div>
         </div>
+
+        {recentsLoaded && recentlyViewed.length > 0 && (
+          <div className="mt-16 border-t border-brand-border/30 pt-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center justify-between mb-6"
+            >
+              <div>
+                <p className="section-overline">Recently viewed</p>
+                <h3 className="text-display-xs font-display font-bold text-brand-white">
+                  Pick up where you left off
+                </h3>
+              </div>
+              <Link href="/shop" className="text-sm text-brand-gray-400 hover:text-brand-gold transition-colors hover-line">
+                Explore more →
+              </Link>
+            </motion.div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              {recentlyViewed.slice(0, 8).map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/products/${item.slug}`}
+                  className="group rounded-lg border border-brand-border/40 bg-brand-card/60 overflow-hidden transition-colors duration-300 hover:border-brand-gold/40"
+                >
+                  <div className="relative aspect-[4/5] bg-brand-dark">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-card to-brand-muted">
+                        <span className="text-sm font-display gold-text opacity-20 tracking-[0.3em]">
+                          LUXE
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <p className="text-sm font-medium text-brand-white line-clamp-1 group-hover:text-brand-gold transition-colors">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-brand-gray-500 uppercase tracking-[0.2em]">
+                      {formatPrice(item.price)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
