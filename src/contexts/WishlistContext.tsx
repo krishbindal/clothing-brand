@@ -14,6 +14,7 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | null>(null)
 
 const readLocalWishlist = (): string[] => {
+  if (typeof window === 'undefined') return []
   const stored = localStorage.getItem('wishlist')
   if (!stored) return []
   try {
@@ -45,7 +46,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         })
     } else {
       const localIds = readLocalWishlist()
-      queueMicrotask(() => setWishlistIds(localIds))
+      const timeout = window.setTimeout(() => setWishlistIds(localIds), 0)
+      return () => window.clearTimeout(timeout)
     }
   }, [session])
 
