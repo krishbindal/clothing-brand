@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from '@/contexts/CartContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
@@ -8,18 +7,6 @@ import LenisProvider from '@/components/providers/LenisProvider'
 import Navbar from '@/components/layout/Navbar'
 import CartDrawer from '@/components/cart/CartDrawer'
 import { Toaster } from '@/components/ui/Toaster'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: {
@@ -55,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
-      <body className="font-sans bg-brand-black text-brand-white antialiased">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="font-sans bg-brand-black text-brand-white antialiased" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
         <SessionProvider>
           <CartProvider>
             <WishlistProvider>
