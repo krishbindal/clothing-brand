@@ -6,12 +6,36 @@ import { motion } from 'framer-motion'
 export default function NewsletterSection() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) return
-    // TODO: integrate with actual newsletter service
-    setSubmitted(true)
+    setError('')
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = (await response.json()) as { error?: string }
+
+      if (!response.ok) {
+        setError(data.error || 'Something went wrong. Please try again.')
+        return
+      }
+
+      setSubmitted(true)
+      setEmail('')
+    } catch {
+      setError('Unable to subscribe right now. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -45,19 +69,27 @@ export default function NewsletterSection() {
                 <span className="text-brand-gold font-medium text-sm">You&apos;re in. Welcome to the circle.</span>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="input-dark flex-1 text-center sm:text-left"
-                />
-                <button type="submit" className="btn-primary whitespace-nowrap">
-                  Join the Drop
-                </button>
-              </form>
+              <>
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="input-dark flex-1 text-center sm:text-left"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    aria-disabled={isSubmitting}
+                    className="btn-primary whitespace-nowrap disabled:opacity-60"
+                  >
+                    {isSubmitting ? 'Joining...' : 'Join the Drop'}
+                  </button>
+                </form>
+                {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
+              </>
             )}
           </div>
         </motion.div>
