@@ -6,6 +6,7 @@ import { FilterState } from '@/types'
 interface FiltersSidebarProps {
   filters: FilterState
   hasActiveFilters: boolean
+  categories: string[]
   onToggleCategory: (category: string) => void
   onToggleSize: (size: string) => void
   onToggleStock: () => void
@@ -21,8 +22,15 @@ export default function FiltersSidebar({
   onToggleStock,
   onPriceChange,
   onClear,
+  categories,
 }: FiltersSidebarProps) {
   const [minPrice, maxPrice] = filters.priceRange
+  const categoryOptions = categories.length ? categories : CATEGORIES.filter((category) => category !== 'all')
+
+  const handleSelectAll = () => {
+    if (filters.categories.length === 0) return
+    filters.categories.forEach((category) => onToggleCategory(category))
+  }
 
   return (
     <aside className="hidden lg:block w-56 flex-shrink-0">
@@ -46,19 +54,27 @@ export default function FiltersSidebar({
             Category
           </h3>
           <div className="space-y-1.5">
-            {CATEGORIES.map((category) => (
+            <button
+              onClick={handleSelectAll}
+              className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200 ${
+                filters.categories.length === 0
+                  ? 'text-brand-white bg-brand-card'
+                  : 'text-brand-gray-400 hover:text-brand-white hover:bg-brand-card/60'
+              }`}
+            >
+              All
+            </button>
+            {categoryOptions.map((category) => (
               <button
                 key={category}
-                onClick={() => category !== 'all' && onToggleCategory(category)}
+                onClick={() => onToggleCategory(category)}
                 className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200 ${
-                  category === 'all' && filters.categories.length === 0
-                    ? 'text-brand-white bg-brand-card'
-                    : filters.categories.includes(category)
-                      ? 'text-brand-gold bg-brand-gold/8 border border-brand-gold/20'
-                      : 'text-brand-gray-400 hover:text-brand-white hover:bg-brand-card/60'
+                  filters.categories.includes(category)
+                    ? 'text-brand-gold bg-brand-gold/8 border border-brand-gold/20'
+                    : 'text-brand-gray-400 hover:text-brand-white hover:bg-brand-card/60'
                 }`}
               >
-                {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
+                {category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
             ))}
           </div>

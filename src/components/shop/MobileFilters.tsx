@@ -9,6 +9,7 @@ interface MobileFiltersProps {
   open: boolean
   filters: FilterState
   onClose: () => void
+  categories: string[]
   onToggleCategory: (category: string) => void
   onToggleSize: (size: string) => void
   onApply: () => void
@@ -19,11 +20,14 @@ export default function MobileFilters({
   open,
   filters,
   onClose,
+  categories,
   onToggleCategory,
   onToggleSize,
   onApply,
   onClear,
 }: MobileFiltersProps) {
+  const categoryOptions = categories.length ? categories : CATEGORIES.filter((category) => category !== 'all')
+
   return (
     <Modal
       open={open}
@@ -60,7 +64,7 @@ export default function MobileFilters({
             Category
           </h3>
           <div className="space-y-1.5">
-            {CATEGORIES.filter((category) => category !== 'all').map((category) => (
+            {categoryOptions.map((category) => (
               <button
                 key={category}
                 onClick={() => onToggleCategory(category)}
