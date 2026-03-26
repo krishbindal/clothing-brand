@@ -26,7 +26,7 @@ export function Toaster() {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const toast = useCallback((type: Toast['type'], message: string) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    const id = Math.random().toString(36).substring(2, 11)
     setToasts((prev) => [...prev, { id, type, message }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
