@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
@@ -110,11 +110,15 @@ const sampleProducts: Product[] = [
 const tabs = ['All', 'New Arrivals', 'Bestsellers', 'Sale']
 
 export default function ProductShowcase() {
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window === 'undefined') return 'All'
+  const [activeTab, setActiveTab] = useState('All')
+
+  useEffect(() => {
     const stored = localStorage.getItem('featured-tab')
-    return stored && tabs.includes(stored) ? stored : 'All'
-  })
+    if (stored && tabs.includes(stored)) {
+      const timeout = window.setTimeout(() => setActiveTab(stored), 0)
+      return () => window.clearTimeout(timeout)
+    }
+  }, [])
 
   const filteredProducts = useMemo(() => {
     switch (activeTab) {

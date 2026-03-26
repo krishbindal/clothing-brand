@@ -182,7 +182,7 @@ export default function CartDrawer() {
                   <p className="text-xs text-brand-gray-500 mt-2">
                     {remaining > 0
                       ? `Add ${formatPrice(remaining)} for complimentary express shipping`
-                      : 'You unlocked complimentary express shipping'}
+                      : 'You unlocked complimentary express shipping!'}
                   </p>
                 </div>
 

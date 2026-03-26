@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -22,20 +22,34 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColorName, setSelectedColorName] = useState(product.colors?.[0]?.name || 'Default')
   const [addedFeedback, setAddedFeedback] = useState(false)
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { addItem } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
 
   const inWishlist = isInWishlist(product.id)
-  const discountPct = product.comparePrice
-    ? getDiscountPercentage(product.price, product.comparePrice)
-    : 0
-  const savings = product.comparePrice ? product.comparePrice - product.price : 0
+  const pricingMeta = product.comparePrice
+    ? {
+      discountPct: getDiscountPercentage(product.price, product.comparePrice),
+      savings: product.comparePrice - product.price,
+    }
+    : { discountPct: 0, savings: 0 }
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleQuickAdd = () => {
     if (!selectedSize) return
     addItem(product, 1, selectedSize, selectedColorName)
     setAddedFeedback(true)
-    setTimeout(() => setAddedFeedback(false), 1500)
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current)
+    }
+    feedbackTimeoutRef.current = setTimeout(() => setAddedFeedback(false), 1500)
     setQuickAddOpen(false)
     setSelectedSize('')
   }
@@ -92,14 +106,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               New
             </span>
           )}
-          {discountPct > 0 && (
+          {pricingMeta.discountPct > 0 && (
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded uppercase">
-              -{discountPct}%
+              -{pricingMeta.discountPct}%
             </span>
           )}
-          {savings > 0 && (
+          {pricingMeta.savings > 0 && (
             <span className="bg-brand-gold/95 text-brand-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
-              Save ${savings}
+              Save ${pricingMeta.savings}
             </span>
           )}
           {!product.inStock && (
@@ -153,7 +167,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                     </button>
                   ))}
                 </div>
-                {lowStock && (
+                {lowStock && selectedSizeData && (
                   <p className="text-[10px] text-amber-300 uppercase tracking-wide mb-2">
                     Only {selectedSizeData.stockCount} left in {selectedSize}
                   </p>
