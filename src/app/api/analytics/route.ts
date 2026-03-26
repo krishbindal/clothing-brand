@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({
       stats: { pageViews: 0, productClicks: 0, addToCart: 0 },
