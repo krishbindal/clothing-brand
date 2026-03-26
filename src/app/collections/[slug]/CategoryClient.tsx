@@ -8,7 +8,7 @@ import { SlidersHorizontal } from 'lucide-react'
 
 interface CategoryClientProps {
   products: Product[]
-  
+  categoryName?: string
 }
 
 export default function CategoryClient({ products }: CategoryClientProps) {

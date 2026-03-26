@@ -1,0 +1,74 @@
+export const easeInOutCubic = [0.22, 1, 0.36, 1] as const
+
+export const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+}
+
+export const fadeInUp = {
+  initial: { opacity: 0, y: 60 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-100px' },
+  transition: { duration: 0.8, ease: easeInOutCubic as any },
+}
+
+export const fadeInDown = {
+  initial: { opacity: 0, y: -30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: easeInOutCubic as any },
+}
+
+export const fadeInLeft = {
+  initial: { opacity: 0, x: -40 },
+  whileInView: { opacity: 1, x: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.6, ease: easeInOutCubic as any },
+}
+
+export const fadeInRight = {
+  initial: { opacity: 0, x: 40 },
+  whileInView: { opacity: 1, x: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.6, ease: easeInOutCubic as any },
+}
+
+export const scaleIn = {
+  initial: { scale: 0.8, opacity: 0 },
+  animate: { scale: 1, opacity: 1 },
+  exit: { scale: 0.8, opacity: 0 },
+  transition: { duration: 0.5, ease: easeInOutCubic as any },
+}
+
+export const staggerContainer = {
+  initial: {},
+  whileInView: { transition: { staggerChildren: 0.15 } },
+  viewport: { once: true, margin: '-50px' },
+}
+
+export const staggerItem = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: easeInOutCubic as any },
+}
+
+export const slideInFromBottom = {
+  initial: { y: '100%' },
+  animate: { y: 0 },
+  exit: { y: '100%' },
+  transition: { duration: 0.4, ease: easeInOutCubic as any },
+}
+
+export const slideInFromRight = {
+  initial: { x: '100%' },
+  animate: { x: 0 },
+  exit: { x: '100%' },
+  transition: { duration: 0.4, ease: easeInOutCubic as any },
+}
+
+export const slideInFromLeft = {
+  initial: { x: '-100%' },
+  animate: { x: 0 },
+  exit: { x: '-100%' },
+  transition: { duration: 0.4, ease: easeInOutCubic as any },
+}
