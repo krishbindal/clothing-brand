@@ -8,6 +8,8 @@ import {
   productBySlugQuery,
   productsByCategoryQuery,
   searchProductsQuery,
+  newArrivalsQuery,
+  trendingProductsQuery,
 } from './queries'
 import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
 import type { Category, Product } from '@/types'
@@ -45,6 +47,17 @@ function mapImage(img: SanityImageAsset | undefined, fallbackAlt: string) {
 }
 
 function mapProduct(doc: SanityProduct): Product {
+  const createdAtDate = doc.createdAt ? new Date(doc.createdAt) : null
+  const isNew =
+    createdAtDate && Number.isFinite(createdAtDate.valueOf())
+      ? Date.now() - createdAtDate.getTime() < 1000 * 60 * 60 * 24 * 30
+      : false
+
+  const tags: string[] = []
+  if (isNew) tags.push('new')
+  if (doc.featured) tags.push('trending')
+  if (doc.stock !== undefined && doc.stock > 0 && doc.stock <= 3) tags.push('low-stock')
+
   return {
     id: doc.id,
     name: doc.name,
@@ -61,7 +74,7 @@ function mapProduct(doc: SanityProduct): Product {
     materials: [],
     inStock: (doc.stock ?? 0) > 0,
     stockCount: doc.stock,
-    tags: [],
+    tags,
     featured: Boolean(doc.featured),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -69,11 +82,13 @@ function mapProduct(doc: SanityProduct): Product {
 }
 
 function mapCategory(doc: SanityCategory): Category {
+  const cover = mapImage(doc.coverImage, doc.name)
   return {
     id: doc.id,
     name: doc.name,
     slug: doc.slug || '',
     productCount: doc.productCount,
+    image: cover?.url,
   }
 }
 
@@ -101,6 +116,26 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   const docs = await safeFetch<SanityProduct[]>(
     'getFeaturedProducts',
     featuredProductsQuery,
+    {},
+    [],
+  )
+  return docs.map(mapProduct)
+}
+
+export async function getNewArrivals(): Promise<Product[]> {
+  const docs = await safeFetch<SanityProduct[]>(
+    'getNewArrivals',
+    newArrivalsQuery,
+    {},
+    [],
+  )
+  return docs.map(mapProduct)
+}
+
+export async function getTrendingProducts(): Promise<Product[]> {
+  const docs = await safeFetch<SanityProduct[]>(
+    'getTrendingProducts',
+    trendingProductsQuery,
     {},
     [],
   )

@@ -38,12 +38,20 @@ export const allProductsQuery = groq`
   *[_type == "product"] | order(_createdAt desc) ${productFields}
 `
 
+export const newArrivalsQuery = groq`
+  *[_type == "product"] | order(_createdAt desc)[0...8] ${productFields}
+`
+
 export const productsByCategoryQuery = groq`
   *[_type == "product" && (category->slug.current == $category || category->name == $category)] | order(_createdAt desc) ${productFields}
 `
 
 export const featuredProductsQuery = groq`
   *[_type == "product" && featured == true] | order(_createdAt desc) ${productFields}
+`
+
+export const trendingProductsQuery = groq`
+  *[_type == "product" && featured == true] | order(_createdAt desc)[0...6] ${productFields}
 `
 
 export const productBySlugQuery = groq`
@@ -55,7 +63,22 @@ export const categoriesQuery = groq`
     "id": _id,
     name,
     "slug": slug.current,
-    "productCount": count(*[_type == "product" && references(^._id)])
+    "productCount": count(*[_type == "product" && references(^._id)]),
+    "coverImage": *[_type == "product" && references(^._id)][0].images[0]{
+      ...,
+      "asset": asset->{
+        _id,
+        url,
+        altText,
+        metadata {
+          lqip,
+          dimensions {
+            width,
+            height
+          }
+        }
+      }
+    }
   }
 `
 

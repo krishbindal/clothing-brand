@@ -37,6 +37,7 @@ export interface SanityCategory {
   name: string
   slug?: string
   productCount?: number
+  coverImage?: SanityImageAsset
 }
 
 export interface SanityBanner {
