@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { getPrisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ users: [] })
+    return Response.json({ users: [] })
   }
 
   try {
@@ -25,9 +25,9 @@ export async function GET(_req: NextRequest) {
       take: 100,
     })
 
-    return NextResponse.json({ users })
+    return Response.json({ users })
   } catch (error) {
     console.error('Admin users fetch failed:', error)
-    return NextResponse.json({ error: 'Unable to load users' }, { status: 500 })
+    return Response.json({ error: 'Unable to load users' }, { status: 500 })
   }
 }
