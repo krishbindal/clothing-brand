@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Sparkles } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const params = useSearchParams()
   const orderId = params.get('orderId')
   const { user } = useAuth()
@@ -58,5 +59,22 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-brand-black pt-24 pb-16 px-4 flex items-center justify-center">
+          <div className="w-full max-w-3xl space-y-4">
+            <div className="h-4 w-48 bg-brand-card/60 rounded-full animate-pulse mx-auto" />
+            <div className="h-32 bg-brand-card/50 rounded-2xl animate-pulse" />
+          </div>
+        </main>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
   )
 }
