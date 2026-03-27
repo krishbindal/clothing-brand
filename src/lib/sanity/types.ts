@@ -38,6 +38,7 @@ export interface SanityCategory {
   name: string
   slug?: string
   productCount?: number
+  coverImage?: SanityImageAsset
   cover?: SanityImageAsset | null
 }
 

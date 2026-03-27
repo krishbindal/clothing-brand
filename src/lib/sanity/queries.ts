@@ -39,6 +39,10 @@ export const allProductsQuery = groq`
   *[_type == "product"] | order(_createdAt desc) ${productFields}
 `
 
+export const newArrivalsQuery = groq`
+  *[_type == "product"] | order(_createdAt desc)[0...8] ${productFields}
+`
+
 export const productsByCategoryQuery = groq`
   *[_type == "product" && (category->slug.current == $category || category->name == $category)] | order(_createdAt desc) ${productFields}
 `
@@ -65,6 +69,8 @@ export const categoriesQuery = groq`
     name,
     "slug": slug.current,
     "productCount": count(*[_type == "product" && references(^._id)]),
+    "coverImage": *[_type == "product" && references(^._id)][0].images[0]{
+      ...,
     "cover": *[_type == "product" && references(^._id)][0].images[0]{
       "url": asset->url,
       "asset": asset->{
@@ -78,6 +84,7 @@ export const categoriesQuery = groq`
             height
           }
         }
+      }
       },
       "alt": coalesce(alt, asset->altText, name),
       "width": asset->metadata.dimensions.width,

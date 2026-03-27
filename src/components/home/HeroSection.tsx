@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowDown, ArrowRight, Sparkles } from 'lucide-react'
@@ -11,6 +12,22 @@ const EASE_LUXURY = [0.22, 1, 0.36, 1] as const
 interface HeroSectionProps {
   title?: string
   subtitle?: string
+  imageUrl?: string
+  primaryCtaLabel?: string
+  primaryCtaHref?: string
+  secondaryCtaLabel?: string
+  secondaryCtaHref?: string
+}
+
+export default function HeroSection({
+  title,
+  subtitle,
+  imageUrl,
+  primaryCtaLabel,
+  primaryCtaHref,
+  secondaryCtaLabel,
+  secondaryCtaHref,
+}: HeroSectionProps) {
   imageUrl?: string | null
   ctaHref?: string
   ctaLabel?: string
@@ -29,6 +46,10 @@ export default function HeroSection({ title, subtitle, imageUrl, ctaHref = '/sho
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
   const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'])
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.92])
+  const primaryLabel = primaryCtaLabel || 'Shop the Drop'
+  const primaryHref = primaryCtaHref || '/shop'
+  const secondaryLabel = secondaryCtaLabel || 'Discover the Atelier'
+  const secondaryHref = secondaryCtaHref || '/collections'
 
   return (
     <section
@@ -37,6 +58,34 @@ export default function HeroSection({ title, subtitle, imageUrl, ctaHref = '/sho
     >
       <motion.div style={{ y, scale }} className="absolute inset-0">
         {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={title || 'Hero banner'}
+            fill
+            priority
+            className="object-cover opacity-70"
+            sizes="100vw"
+          />
+        ) : (
+          /* Video element — autoplay muted loop */
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+            poster=""
+          >
+            {/* In production, replace with actual fashion video:
+                <source src="/videos/hero.mp4" type="video/mp4" />
+                For now, the fallback gradients create the cinematic look */}
+          </video>
+        )}
+
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-black/5 via-brand-black/50 to-brand-black z-10" />
+        <div className="absolute inset-0 bg-noise opacity-30 z-10" />
           <div className="absolute inset-0">
             <Image
               src={imageUrl}
@@ -140,6 +189,8 @@ export default function HeroSection({ title, subtitle, imageUrl, ctaHref = '/sho
           transition={{ duration: 1, delay: 1.3, ease: EASE_LUXURY }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12"
         >
+          <Link href={primaryHref} className="btn-primary group min-w-[220px]">
+            {primaryLabel}
           <Link href={ctaHref} className="btn-primary group min-w-[220px]">
             {ctaLabel}
             <ArrowRight
@@ -147,8 +198,8 @@ export default function HeroSection({ title, subtitle, imageUrl, ctaHref = '/sho
               className="transition-transform duration-500 ease-luxury group-hover:translate-x-2"
             />
           </Link>
-          <Link href="/collections" className="btn-secondary min-w-[220px]">
-            Discover the Atelier
+          <Link href={secondaryHref} className="btn-secondary min-w-[220px]">
+            {secondaryLabel}
           </Link>
         </motion.div>
 
