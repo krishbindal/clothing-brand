@@ -249,6 +249,8 @@ export default function CheckoutPage() {
             signature: response.razorpay_signature,
           })
           clearCart()
+          const successParams = order.id ? `?orderId=${order.id}` : ''
+          router.push(`/checkout/success${successParams}`)
         },
       })
 

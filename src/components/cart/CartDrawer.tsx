@@ -208,6 +208,8 @@ export default function CartDrawer() {
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
   const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const freeShipping = remaining <= 0
+  const shipping = subtotal === 0 || freeShipping ? 0 : 12
+  const total = subtotal + shipping
   const [justAddedId, setJustAddedId] = useState<string | null>(null)
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousIdsRef = useRef<string[]>([])
@@ -374,11 +376,21 @@ export default function CartDrawer() {
                   <span className="text-brand-white font-semibold text-lg">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm text-brand-gray-400">
+                  <span>Shipping</span>
+                  <span className="text-brand-white">
+                    {shipping ? formatPrice(shipping) : 'Free'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-brand-gray-400 text-sm">Total</span>
+                  <span className="text-brand-white font-semibold text-xl">{formatPrice(total)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-brand-gray-400">
                   <span>Estimated delivery</span>
                   <span className="text-brand-white">{estimatedDelivery}</span>
                 </div>
                 <p className="text-[11px] text-brand-gray-600">
-                  Shipping and taxes calculated at checkout
+                  Taxes calculated at checkout. Shipping shown is an estimate.
                 </p>
 
                 {/* CTA */}
