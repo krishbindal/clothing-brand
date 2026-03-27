@@ -12,9 +12,9 @@ export default function LiveActivityTicker({ anchor = 'Worldwide' }: LiveActivit
   const [index, setIndex] = useState(0)
   const events = useMemo(
     () => [
-      { icon: <Flame size={14} />, message: '24 shoppers eyeing the Noir Capsule', meta: 'Trending', tone: 'text-amber-200' },
+      { icon: <Flame size={14} />, message: '🔥 12 people viewing this piece now', meta: 'Live heat', tone: 'text-amber-200' },
+      { icon: <Activity size={14} />, message: '5 sold in the last hour — limited sizing', meta: anchor, tone: 'text-green-200' },
       { icon: <Sparkles size={14} />, message: 'New drop moving fast — sizes are going', meta: 'New', tone: 'text-brand-gold' },
-      { icon: <Activity size={14} />, message: '7 checkouts in the last 10 minutes', meta: anchor, tone: 'text-green-200' },
     ],
     [anchor],
   )

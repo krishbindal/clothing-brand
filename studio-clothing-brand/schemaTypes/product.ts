@@ -6,16 +6,16 @@ export const product = defineType({
   type: 'document',
   fields: [
     defineField({
-      name: 'name',
+      name: 'title',
       type: 'string',
-      title: 'Name',
+      title: 'Title',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'slug',
       type: 'slug',
       title: 'Slug',
-      options: { source: 'name', maxLength: 96 },
+      options: { source: 'title', maxLength: 96 },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -25,40 +25,53 @@ export const product = defineType({
       validation: (Rule) => Rule.required().min(0),
     }),
     defineField({
-      name: 'image',
-      type: 'image',
-      title: 'Primary Image',
-      options: { hotspot: true },
-      fields: [
+      name: 'images',
+      type: 'array',
+      title: 'Images',
+      of: [
         defineField({
-          name: 'alt',
-          type: 'string',
-          title: 'Alt text',
-          validation: (Rule) => Rule.max(120),
+          type: 'image',
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: 'alt',
+              type: 'string',
+              title: 'Alt text',
+              validation: (Rule) => Rule.max(140),
+            }),
+          ],
         }),
       ],
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
       name: 'description',
       type: 'text',
       title: 'Description',
+      rows: 4,
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'category',
-      type: 'string',
       title: 'Category',
+      type: 'reference',
+      to: [{ type: 'category' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'stock',
       type: 'number',
       title: 'Stock',
+      description: 'Used for low-stock and sold-out labels',
       initialValue: 0,
       validation: (Rule) => Rule.min(0),
     }),
-    defineField({ name: 'featured', type: 'boolean', title: 'Featured', initialValue: false }),
+    defineField({
+      name: 'isFeatured',
+      type: 'boolean',
+      title: 'Featured',
+      initialValue: false,
+    }),
     defineField({
       name: 'createdAt',
       type: 'datetime',

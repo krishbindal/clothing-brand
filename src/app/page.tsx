@@ -4,7 +4,12 @@ import Footer from '@/components/layout/Footer'
 import ProductGrid from '@/components/shop/ProductGrid'
 import PersonalizedRail from '@/components/home/PersonalizedRail'
 import DynamicSpotlight from '@/components/home/DynamicSpotlight'
-import { getAllProducts, getFeaturedProducts, getBanner, getCategories } from '@/lib/sanity'
+import AnnouncementBar from '@/components/home/AnnouncementBar'
+import CategoryCarousel from '@/components/home/CategoryCarousel'
+import LiveActivityTicker from '@/components/home/LiveActivityTicker'
+import ProductShowcase from '@/components/home/ProductShowcase'
+import SocialProof from '@/components/home/SocialProof'
+import { getAllProducts, getFeaturedProducts, getBanner, getCategories, getNewArrivals, urlFor } from '@/lib/sanity'
 
 export const revalidate = 60
 
@@ -14,70 +19,100 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const products = await getAllProducts()
-  const featured = await getFeaturedProducts()
-  const banner = await getBanner()
-  const categories = await getCategories()
+  const [products, featured, banner, categories, newArrivals] = await Promise.all([
+    getAllProducts(),
+    getFeaturedProducts(),
+    getBanner(),
+    getCategories(),
+    getNewArrivals(),
+  ])
 
   const safeProducts = products || []
   const safeFeatured = featured || []
-  const spotlight = safeFeatured.length ? safeFeatured.slice(0, 8) : safeProducts.slice(0, 8)
-  const heroCollection = spotlight
-  const trendingFallback = safeFeatured.length ? safeFeatured.slice(0, 4) : safeProducts.slice(0, 4)
-  const arrivalsFallback = safeProducts.slice(0, 4)
-
-  if (safeProducts.length === 0) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center text-brand-white bg-brand-black">
-        <h1 className="text-2xl font-light">No products available yet.</h1>
-      </div>
-    )
-  }
+  const safeArrivals = (newArrivals && newArrivals.length > 0 ? newArrivals : safeProducts).slice(0, 8)
+  const spotlight = (safeFeatured.length ? safeFeatured : safeProducts).slice(0, 8)
+  const trendingFallback = (safeFeatured.length ? safeFeatured : safeProducts).slice(0, 4)
+  const arrivalsFallback = safeArrivals.slice(0, 4)
+  const completeLook = (safeProducts.length ? safeProducts : safeArrivals).slice(0, 4)
+  const heroImage = banner?.image ? urlFor(banner.image).width(2000).height(1200).url() : undefined
+  const hasCatalog = safeProducts.length > 0 || safeFeatured.length > 0 || safeArrivals.length > 0
 
   return (
     <>
-      <HeroSection 
-        title={banner?.title || "WEAR THE FUTURE"} 
-        subtitle={banner?.subtitle || "Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force."} 
+      <AnnouncementBar />
+      <LiveActivityTicker anchor="Global atelier" />
+      <HeroSection
+        title={banner?.title || 'WEAR THE FUTURE'}
+        subtitle={
+          banner?.subtitle ||
+          'Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force.'
+        }
+        eyebrow={banner?.eyebrow || 'New Collection · SS25'}
+        ctaHref={banner?.cta?.href || '/shop'}
+        ctaLabel={banner?.cta?.label || 'Shop Now'}
+        imageUrl={heroImage}
       />
 
-      <DynamicSpotlight products={safeProducts} />
-      
+      <DynamicSpotlight products={spotlight} />
+
       <section className="bg-brand-black border-t border-brand-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-14">
           <div className="flex flex-col gap-6">
             <p className="section-overline">Trending now</p>
-            <h2 className="section-title">Most wanted silhouettes</h2>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="section-title">Most wanted silhouettes</h2>
+              <span className="text-xs uppercase tracking-[0.25em] text-brand-gray-500">
+                🔥 12 people viewing right now
+              </span>
+            </div>
             <ProductGrid products={trendingFallback} priorityCount={2} />
           </div>
 
           <div className="flex flex-col gap-6">
             <p className="section-overline">New arrivals</p>
-            <h2 className="section-title">Fresh drops, limited runs</h2>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="section-title">Fresh drops, limited runs</h2>
+              <span className="text-xs uppercase tracking-[0.25em] text-brand-gray-500">
+                5 sold in the last hour
+              </span>
+            </div>
             <ProductGrid products={arrivalsFallback} priorityCount={2} />
           </div>
         </div>
       </section>
 
-      <section className="bg-brand-black relative py-24 sm:py-32 overflow-hidden border-t border-brand-border/30">
-        {/* Ambient Glow */}
+      <ProductShowcase products={spotlight} />
+
+      <CategoryCarousel categories={categories || []} />
+
+      <section className="bg-brand-black relative py-20 sm:py-24 overflow-hidden border-t border-brand-border/30">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-brand-gold/5 rounded-full blur-[160px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col mb-16 items-center text-center">
-             <p className="text-brand-gold text-xs font-semibold uppercase tracking-[0.4em] mb-4 flex items-center gap-3">
-               <span className="w-8 h-px bg-brand-gold/30 block"></span>
-               The Collection
-               <span className="w-8 h-px bg-brand-gold/30 block"></span>
-             </p>
-             <h2 className="text-4xl md:text-6xl font-display font-medium text-brand-white tracking-tight">Latest Arrivals</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p className="section-overline">Complete the look</p>
+              <h2 className="section-title">Stylist-picked pairings</h2>
+              <p className="text-brand-gray-400 mt-3 max-w-2xl">
+                Layer core pieces with statement silhouettes. Smart labels flag fresh drops, trending picks, and low stock so you never miss.
+              </p>
+            </div>
+            {hasCatalog && (
+              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.25em] text-brand-gray-500">
+                <span className="px-3 py-1 rounded-full border border-brand-border/50">New</span>
+                <span className="px-3 py-1 rounded-full border border-brand-border/50">Trending</span>
+                <span className="px-3 py-1 rounded-full border border-brand-border/50">Low stock</span>
+              </div>
+            )}
           </div>
-          
-          <ProductGrid products={heroCollection} />
+
+          <ProductGrid products={completeLook} priorityCount={1} />
         </div>
       </section>
 
-      <PersonalizedRail fallback={safeProducts} catalog={safeProducts} />
+      <SocialProof />
+
+      <PersonalizedRail fallback={safeArrivals} catalog={safeProducts} />
 
       <Footer />
     </>
