@@ -87,6 +87,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   const inWishlist = product ? isInWishlist(product.id) : false
   const isBestseller = product?.tags?.includes('bestseller')
   const isNewDrop = product?.tags?.includes('new-drop') || product?.tags?.includes('new')
+  const salesVelocity =
+    product?.salesVelocity ?? Math.max(1, Math.round(((product?.soldCount ?? 90) || 90) / 60))
+  const soldTotal = product?.soldCount ?? Math.max(120, (product?.reviewCount ?? 60) * 2)
 
   const productImages = useMemo(
     () =>
@@ -566,6 +569,14 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                     Trending
                   </span>
                 )}
+              </div>
+              <div className="flex items-center gap-3 mt-2 text-[11px] uppercase tracking-[0.25em] text-brand-gray-500">
+                <span className="inline-flex items-center gap-1 text-amber-200">
+                  <Sparkles size={13} />
+                  {salesVelocity} sold in last hour
+                </span>
+                <span className="w-1 h-1 rounded-full bg-brand-border/50" />
+                <span className="text-brand-gray-300">{soldTotal}+ secured</span>
               </div>
 
               {/* Rating */}

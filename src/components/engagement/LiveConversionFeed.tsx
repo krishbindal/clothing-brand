@@ -8,9 +8,9 @@ import type { Product } from '@/types'
 import { demoProducts } from '@/lib/demoContent'
 import { formatPrice } from '@/lib/utils'
 
-const NAMES = ['Aria', 'Noah', 'Mila', 'Kian', 'Sarai', 'Luca', 'Nyx', 'Leo', 'Iman', 'Rhea']
-const CITIES = ['Paris', 'Copenhagen', 'New York', 'London', 'Seoul', 'Tokyo', 'Berlin', 'Toronto']
-const ACTIONS = ['purchased', 'added to cart', 'secured the drop']
+const NAMES = ['Aria', 'Noah', 'Mila', 'Kian', 'Sarai', 'Luca', 'Nyx', 'Leo', 'Iman', 'Rhea', 'Someone']
+const CITIES = ['Delhi', 'Paris', 'Copenhagen', 'New York', 'London', 'Seoul', 'Tokyo', 'Berlin', 'Toronto']
+const ACTIONS = ['bought', 'secured the drop', 'checked out']
 
 interface Signal {
   name: string
@@ -18,6 +18,7 @@ interface Signal {
   product: Product
   action: string
   viewers: number
+  groupCount?: number
 }
 
 export default function LiveConversionFeed() {
@@ -25,6 +26,19 @@ export default function LiveConversionFeed() {
   const pool = useMemo(() => (products && products.length ? products : demoProducts), [products])
   const [signal, setSignal] = useState<Signal | null>(null)
   const dismissTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isCartSignal = signal ? Boolean(signal.groupCount || signal.action.includes('cart')) : false
+  const isDropSignal = signal
+    ? Boolean(
+        signal.action.includes('drop') ||
+          signal.action.includes('bought') ||
+          signal.action.includes('checked out'),
+      )
+    : false
+  const headline = signal
+    ? signal.groupCount
+      ? `${signal.groupCount} people in ${signal.city} added ${signal.product.name} to cart`
+      : `${signal.name} in ${signal.city} ${signal.action} ${signal.product.name}`
+    : ''
 
   useEffect(() => {
     if (!pool.length) return
@@ -35,8 +49,17 @@ export default function LiveConversionFeed() {
       const name = NAMES[Math.floor(Math.random() * NAMES.length)]
       const city = CITIES[Math.floor(Math.random() * CITIES.length)]
       const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)]
+      const isGroup = Math.random() < 0.35
+      const groupCount = 3 + Math.floor(Math.random() * 8)
       const viewers = 8 + Math.floor(Math.random() * 18)
-      setSignal({ name, city, product, action, viewers })
+      setSignal({
+        name: isGroup ? 'Someone' : name,
+        city,
+        product,
+        action: isGroup ? 'added to cart' : action,
+        viewers,
+        groupCount: isGroup ? groupCount : undefined,
+      })
       if (dismissTimeout.current) clearTimeout(dismissTimeout.current)
       dismissTimeout.current = setTimeout(() => setSignal(null), 4600)
     }
@@ -62,24 +85,22 @@ export default function LiveConversionFeed() {
         >
           <div className="flex items-start gap-3 rounded-2xl border border-brand-border/50 bg-brand-card/80 backdrop-blur-xl px-4 py-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] min-w-[260px]">
             <div className="p-2 rounded-full bg-brand-gold/15 border border-brand-gold/30">
-              {signal.action === 'purchased' ? (
+              {isCartSignal ? (
                 <ShoppingBag size={16} className="text-brand-gold" />
-              ) : signal.action === 'secured the drop' ? (
+              ) : isDropSignal ? (
                 <Sparkles size={16} className="text-brand-gold" />
               ) : (
                 <Flame size={16} className="text-amber-300" />
               )}
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-brand-white font-semibold">
-                {signal.name} from {signal.city} {signal.action}
-              </p>
+              <p className="text-sm text-brand-white font-semibold">{headline}</p>
               <p className="text-xs text-brand-gray-400">
-                {signal.product.name} · {formatPrice(signal.product.price)}
+                {formatPrice(signal.product.price)} · {signal.city}
               </p>
               <div className="text-[11px] uppercase tracking-[0.3em] text-brand-gray-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                {signal.viewers} people viewing now
+                {signal.viewers} people viewing now · Hype rising
               </div>
             </div>
           </div>

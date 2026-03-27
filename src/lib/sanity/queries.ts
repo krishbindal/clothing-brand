@@ -12,6 +12,9 @@ export const getAllProductsQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -28,6 +31,9 @@ export const getFeaturedProductsQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -44,6 +50,9 @@ export const getNewArrivalsQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -61,6 +70,9 @@ export const getLatestDropProductsQuery = groq`
     stock,
     isFeatured,
     tags,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -80,6 +92,9 @@ export const getBannerQuery = groq`
     subtitle,
     eyebrow,
     featured,
+    dropTitle,
+    dropDate,
+    isDropActive,
     image,
     cta
   }
@@ -97,6 +112,9 @@ export const getProductBySlugQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -121,6 +139,9 @@ export const getProductsByCategorySlugQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `
@@ -137,6 +158,9 @@ export const searchProductsQuery = groq`
     "categorySlug": category->slug.current,
     stock,
     isFeatured,
+    soldCount,
+    salesVelocity,
+    liveViewers,
     createdAt
   }
 `

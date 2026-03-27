@@ -24,9 +24,17 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   const stockLeft =
     product.stockCount ??
     product.sizes?.find((size) => typeof size.stockCount === 'number')?.stockCount
+  const viewersNow = product.liveViewers ?? Math.max(12, 24 - (product.stockCount ?? 0))
+  const soldInLastHour =
+    product.salesVelocity ?? Math.max(1, Math.round(((product.soldCount ?? 80) || 80) / 60))
+  const soldTotal = product.soldCount
 
   return (
-    <div className="group relative">
+    <motion.div
+      className="group relative"
+      whileHover={{ scale: 1.01, y: -2 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+    >
       <Link
         prefetch
         href={`/products/${product.slug}`}
@@ -109,6 +117,20 @@ export default function ProductCard({ product, priority = false }: { product: Pr
             )}
           </div>
 
+          <div className="flex items-center gap-3 mt-2 text-[11px] uppercase tracking-[0.25em] text-brand-gray-500">
+            <span className="inline-flex items-center gap-1 text-brand-gray-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              {viewersNow} viewing
+            </span>
+            <span className="w-1 h-1 rounded-full bg-brand-border/50" />
+            <span className="text-brand-gold">{soldInLastHour} sold last hour</span>
+          </div>
+          {soldTotal ? (
+            <p className="text-[11px] text-brand-gray-500 uppercase tracking-[0.2em]">
+              {soldTotal}+ claimed
+            </p>
+          ) : null}
+
           {product.colors?.length > 0 && (
             <div className="flex items-center gap-1 mt-2">
               {product.colors.slice(0, 4).map((color) => (
@@ -167,6 +189,6 @@ export default function ProductCard({ product, priority = false }: { product: Pr
       {quickViewOpen && (
         <QuickViewModal product={product} open={quickViewOpen} onClose={() => setQuickViewOpen(false)} />
       )}
-    </div>
+    </motion.div>
   )
 }

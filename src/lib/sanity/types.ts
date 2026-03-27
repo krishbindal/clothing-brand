@@ -27,6 +27,9 @@ export interface SanityProduct {
   image?: SanityImageAsset | null
   stock?: number
   isFeatured?: boolean
+  soldCount?: number
+  salesVelocity?: number
+  liveViewers?: number
   category?: string | { name?: string; slug?: { current?: string } }
   categorySlug?: string | { current?: string }
   tags?: string[]
@@ -47,6 +50,9 @@ export interface SanityBanner {
   subtitle?: string
   eyebrow?: string
   featured?: boolean
+  dropTitle?: string
+  dropDate?: string
+  isDropActive?: boolean
   image?: SanityImageAsset | null
   cta?: {
     label?: string

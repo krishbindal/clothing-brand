@@ -18,6 +18,17 @@ export default function LiveActivityTicker({ anchor = 'Worldwide', products = []
     if (products.length) return products.map((product) => product.name)
     return ['Aether Bomber', 'Seraph Overshirt', 'Obsidian Coat', 'Ion Knit Set']
   }, [products])
+  const metrics = useMemo(() => {
+    if (!products.length) return { viewers: 12, sold: 5 }
+    const viewers = products.reduce((acc, product) => acc + (product.liveViewers ?? 0), 0) || 12
+    const sold =
+      products.reduce(
+        (acc, product) =>
+          acc + (product.salesVelocity ?? Math.max(1, Math.round(((product.soldCount ?? 50) || 50) / 60))),
+        0,
+      ) || 5
+    return { viewers, sold }
+  }, [products])
 
   useEffect(() => {
     const updatePurchase = () => {
@@ -33,11 +44,11 @@ export default function LiveActivityTicker({ anchor = 'Worldwide', products = []
 
   const events = useMemo(
     () => [
-      { icon: <Flame size={14} />, message: '🔥 12 people viewing this piece now', meta: 'Live heat', tone: 'text-amber-200' },
-      { icon: <Activity size={14} />, message: '5 sold in the last hour — limited sizing', meta: anchor, tone: 'text-green-200' },
+      { icon: <Flame size={14} />, message: `🔥 ${metrics.viewers} people viewing this piece now`, meta: 'Live heat', tone: 'text-amber-200' },
+      { icon: <Activity size={14} />, message: `${metrics.sold} sold in the last hour — limited sizing`, meta: anchor, tone: 'text-green-200' },
       { icon: <Sparkles size={14} />, message: livePurchase, meta: 'Drop radar', tone: 'text-brand-gold' },
     ],
-    [anchor, livePurchase],
+    [anchor, livePurchase, metrics.sold, metrics.viewers],
   )
 
   useEffect(() => {

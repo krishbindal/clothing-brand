@@ -13,6 +13,9 @@ export interface Product {
   materials: string[]
   inStock: boolean
   stockCount?: number
+  soldCount?: number
+  salesVelocity?: number
+  liveViewers?: number
   tags: string[]
   featured: boolean
   rating?: number
