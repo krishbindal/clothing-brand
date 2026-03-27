@@ -38,7 +38,12 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
   const discount = product.comparePrice
     ? getDiscountPercentage(product.price, product.comparePrice)
     : 0
-  const lowStock = product.stockCount && product.stockCount <= 3 && product.inStock
+  const stockLeft =
+    product.stockCount ??
+    product.sizes?.find((size) => typeof size.stockCount === 'number')?.stockCount
+  const lowStock = stockLeft && stockLeft <= 3 && product.inStock
+  const isBestseller = product.tags?.includes('bestseller')
+  const isNewDrop = product.tags?.includes('new-drop') || product.tags?.includes('new')
 
   const handleAdd = () => {
     if (!selectedSize || !product.inStock) return
@@ -88,9 +93,14 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
             </ImageZoom>
 
             <div className="absolute top-4 left-4 flex gap-2">
-              {product.tags?.includes('bestseller') && (
+              {isBestseller && (
                 <span className="bg-brand-gold text-brand-black text-[10px] font-semibold px-2.5 py-1 rounded-sm uppercase tracking-widest">
                   Bestseller
+                </span>
+              )}
+              {isNewDrop && (
+                <span className="bg-brand-white/90 text-brand-black text-[10px] font-semibold px-2.5 py-1 rounded-sm uppercase tracking-widest">
+                  New Drop
                 </span>
               )}
               {discount > 0 && (
@@ -101,7 +111,7 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
             </div>
             {lowStock && (
               <div className="absolute bottom-4 left-4 text-[11px] uppercase tracking-[0.2em] bg-amber-500/90 text-brand-black px-3 py-1.5 rounded-sm font-semibold shadow-gold-subtle">
-                Low stock
+                {stockLeft ? `Only ${stockLeft} left` : 'Low stock'}
               </div>
             )}
             {!product.inStock && (

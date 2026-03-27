@@ -43,6 +43,10 @@ function mapProduct(doc: SanityProduct): Product {
   const createdAt = doc.createdAt || new Date().toISOString()
   const stockCount = typeof doc.stock === 'number' ? doc.stock : undefined
   const inStock = stockCount === undefined ? true : stockCount > 0
+  const comparePrice = (doc as unknown as { comparePrice?: number })?.comparePrice
+  const rating = (doc as unknown as { rating?: number })?.rating
+  const reviewCount = (doc as unknown as { reviewCount?: number })?.reviewCount
+  const collection = (doc as unknown as { collection?: string })?.collection
   const images =
     (doc.images
       ?.map((img) => mapImage(img, doc.title))
@@ -61,6 +65,16 @@ function mapProduct(doc: SanityProduct): Product {
   const ageMs = Date.now() - new Date(createdAt).getTime()
   if (Number.isFinite(ageMs) && ageMs <= 1000 * 60 * 60 * 24 * 30) {
     tags.add('new')
+    tags.add('new-drop')
+  }
+  if (doc.tags?.includes('bestseller') || (reviewCount && reviewCount >= 80)) {
+    tags.add('bestseller')
+  }
+  if (doc.isFeatured && stockCount && stockCount > 3) {
+    tags.add('bestseller')
+  }
+  if (collection?.toLowerCase().includes('drop')) {
+    tags.add('new-drop')
   }
 
   const fallbackSizes = [
@@ -84,8 +98,10 @@ function mapProduct(doc: SanityProduct): Product {
     slug,
     description: doc.description || '',
     price: Number(doc.price) || 0,
+    comparePrice: comparePrice ? Number(comparePrice) : undefined,
     images: primaryImage,
     category: categoryName,
+    collection,
     sizes: incomingSizes && incomingSizes.length ? incomingSizes : fallbackSizes,
     colors: incomingColors && incomingColors.length ? incomingColors : fallbackColors,
     materials: [],
@@ -93,6 +109,8 @@ function mapProduct(doc: SanityProduct): Product {
     stockCount,
     tags: Array.from(tags),
     featured: Boolean(doc.isFeatured),
+    rating: rating ? Number(rating) : undefined,
+    reviewCount: reviewCount ? Number(reviewCount) : undefined,
     createdAt,
     updatedAt: doc.updatedAt || createdAt,
   }

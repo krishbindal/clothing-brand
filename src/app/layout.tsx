@@ -8,6 +8,8 @@ import Navbar from '@/components/layout/Navbar'
 import CartDrawer from '@/components/cart/CartDrawer'
 import { Toaster } from '@/components/ui/Toaster'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
+import PageTransition from '@/components/layout/PageTransition'
+import LiveConversionFeed from '@/components/engagement/LiveConversionFeed'
 
 export const metadata: Metadata = {
   title: {
@@ -50,8 +52,11 @@ export default function RootLayout({
             <WishlistProvider>
               <LenisProvider>
                 <Navbar />
-                <main>{children}</main>
+                <PageTransition>
+                  <main>{children}</main>
+                </PageTransition>
                 <CartDrawer />
+                <LiveConversionFeed />
                 <Toaster />
                 <AnalyticsTracker />
               </LenisProvider>

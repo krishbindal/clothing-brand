@@ -16,6 +16,7 @@ import ImageZoom from '@/components/ui/ImageZoom'
 import { useProducts } from '@/hooks'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import EmptyState from '@/components/ui/EmptyState'
+import ProductPageSkeleton from '@/components/shop/ProductPageSkeleton'
 const accordionData = [
   {
     title: 'Details & Materials',
@@ -84,6 +85,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   const { addItem, items: cartItems } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
   const inWishlist = product ? isInWishlist(product.id) : false
+  const isBestseller = product?.tags?.includes('bestseller')
+  const isNewDrop = product?.tags?.includes('new-drop') || product?.tags?.includes('new')
 
   const productImages = useMemo(
     () =>
@@ -257,7 +260,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   }, [])
 
   if (isLoading) {
-    return <div className="min-h-screen bg-brand-black pt-20" />
+    return <ProductPageSkeleton />
   }
 
   if (!product) {
@@ -286,7 +289,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   }
 
   const selectedSizeData = product.sizes?.find((s) => s.label === selectedSize)
-  const isLowStock = selectedSizeData && selectedSizeData.stockCount && selectedSizeData.stockCount <= 3
+  const lowStockCount = selectedSizeData?.stockCount ?? product.stockCount
+  const isLowStock = lowStockCount !== undefined && lowStockCount > 0 && lowStockCount <= 3
 
   return (
     <div className="min-h-screen bg-brand-black pt-20">
@@ -452,7 +456,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
               {isLowStock && (
                 <div className="absolute top-4 right-4 z-10 pointer-events-none bg-amber-500/90 text-brand-black text-[10px] font-bold px-3 py-1.5 rounded-sm uppercase tracking-wide animate-breathe">
-                  Only {selectedSizeData?.stockCount} left
+                  Only {lowStockCount} left
                 </div>
               )}
             </div>
@@ -506,6 +510,33 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               <h1 className="text-display-sm sm:text-display-md font-display font-bold text-brand-white leading-tight">
                 {product.name}
               </h1>
+
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {isNewDrop && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] bg-brand-gold/10 text-brand-gold px-3 py-1 rounded-full border border-brand-gold/30">
+                    <Sparkles size={12} />
+                    New Drop
+                  </span>
+                )}
+                {isBestseller && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] bg-brand-white/10 text-brand-white px-3 py-1 rounded-full border border-brand-border/70">
+                    <ShoppingBag size={12} />
+                    Bestseller
+                  </span>
+                )}
+                {product.tags?.includes('trending') && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] bg-brand-card/80 text-brand-gray-200 px-3 py-1 rounded-full border border-brand-border/70">
+                    <Flame size={12} className="text-amber-300" />
+                    Trending
+                  </span>
+                )}
+                {isLowStock && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] bg-amber-500/15 text-amber-200 px-3 py-1 rounded-full border border-amber-500/40">
+                    <Activity size={12} />
+                    Only {lowStockCount} left
+                  </span>
+                )}
+              </div>
 
               <div className="flex items-center gap-4 mt-4">
                 <span className="text-2xl font-semibold text-brand-white">{formatPrice(product.price)}</span>
@@ -644,13 +675,13 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               {!selectedSize && (
                 <p className="text-[11px] text-brand-gray-600 mt-2.5 uppercase tracking-wide">Please select a size to continue</p>
               )}
-              {isLowStock && selectedSizeData && (
+              {isLowStock && (
                 <motion.p
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-[11px] text-amber-300 mt-2.5 uppercase tracking-wide font-medium"
                 >
-                  ⚡ Only {selectedSizeData.stockCount} left in {selectedSize} — selling fast
+                  ⚡ Only {lowStockCount} left{selectedSize ? ` in ${selectedSize}` : ''} — selling fast
                 </motion.p>
               )}
               <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold mt-2">
