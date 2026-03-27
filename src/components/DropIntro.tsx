@@ -62,12 +62,32 @@ const card = {
 }
 
 export default function DropIntro({ products, banner, collectionName }: DropIntroProps) {
-  const [isOverlayVisible, setIsOverlayVisible] = useState(false)
+  const [showIntro, setShowIntro] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'drop' | 'done'>('idle')
   const [countdown, setCountdown] = useState<number | null>(null)
   const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
   const [hasPlayed, setHasPlayed] = useState(false)
   const [hasSkipped, setHasSkipped] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const skipPersisted = window.localStorage.getItem('skipDropIntro')
+    const seenPersisted = window.localStorage.getItem('seenDrop') || window.localStorage.getItem('hasSeenDropIntro')
+
+    if (skipPersisted) {
+      const frame = window.requestAnimationFrame(() => {
+        setHasSkipped(true)
+        setHasPlayed(true)
+      })
+      return () => window.cancelAnimationFrame(frame)
+    }
+
+    if (seenPersisted) {
+      const frame = window.requestAnimationFrame(() => setHasPlayed(true))
+      return () => window.cancelAnimationFrame(frame)
+    }
+  }, [])
 
   const dropProducts = useMemo(() => (products || []).slice(0, DROP_LIMIT), [products])
   const decoratedProducts = useMemo(() => {
@@ -91,7 +111,10 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   const isScheduledDrop = Boolean(banner?.isDropActive && dropTimestamp)
   const hasInventoryForDrop = dropProducts.length >= 3
   const shouldPlay =
-    (isScheduledDrop && hasInventoryForDrop) || (!hasSkipped && hasInventoryForDrop && (hasRecentProducts || hasFeaturedBanner))
+    !hasPlayed &&
+    !hasSkipped &&
+    hasInventoryForDrop &&
+    (isScheduledDrop || hasRecentProducts || hasFeaturedBanner)
   const waitingViewers = useMemo(
     () => dropProducts.reduce((acc, item) => acc + (item.liveViewers ?? 0), 0) || 18,
     [dropProducts]
@@ -102,76 +125,81 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   const glowOpacity = useSpring(0.45, { stiffness: 80, damping: 18 })
 
   useEffect(() => {
-    glowOpacity.set(isOverlayVisible ? 0 : hasPlayed ? 0.45 : 0)
-  }, [glowOpacity, hasPlayed, isOverlayVisible])
+    glowOpacity.set(showIntro && !isExiting ? 0 : hasPlayed ? 0.45 : 0)
+  }, [glowOpacity, hasPlayed, isExiting, showIntro])
 
   useEffect(() => {
-    if (isScheduledDrop || !shouldPlay || isOverlayVisible || phase !== 'idle') return
-
+    if (!shouldPlay || isScheduledDrop || phase !== 'idle') return
     if (typeof window === 'undefined') return
 
-    const seen = window.localStorage.getItem('hasSeenDropIntro')
-    const skipped = window.localStorage.getItem('skipDropIntro')
-    let cleanup: (() => void) | undefined
+    const skipPersisted = window.localStorage.getItem('skipDropIntro')
+    const seenPersisted = window.localStorage.getItem('seenDrop') || window.localStorage.getItem('hasSeenDropIntro')
 
-    if (skipped) {
+    if (skipPersisted) {
       const frame = window.requestAnimationFrame(() => {
         setHasSkipped(true)
         setHasPlayed(true)
       })
-      cleanup = () => window.cancelAnimationFrame(frame)
-    } else if (seen) {
+      return () => window.cancelAnimationFrame(frame)
+    }
+
+    if (seenPersisted) {
       const frame = window.requestAnimationFrame(() => setHasPlayed(true))
-      cleanup = () => window.cancelAnimationFrame(frame)
-    } else {
-      const raf = window.requestAnimationFrame(() => {
-        setIsOverlayVisible(true)
-        setPhase('countdown')
-        setCountdown(3)
-      })
-      cleanup = () => window.cancelAnimationFrame(raf)
+      return () => window.cancelAnimationFrame(frame)
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setShowIntro(true)
+      setPhase('countdown')
+      setCountdown(3)
+      setHasPlayed(true)
       try {
-        window.localStorage.setItem('hasSeenDropIntro', 'true')
+        window.localStorage.setItem('seenDrop', 'true')
       } catch {
         // ignore storage errors
       }
-    }
+    })
 
-    return cleanup
-  }, [isScheduledDrop, shouldPlay, isOverlayVisible, phase])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (shouldPlay || hasPlayed) return
-    const frame = window.requestAnimationFrame(() => setHasPlayed(true))
     return () => window.cancelAnimationFrame(frame)
-  }, [hasPlayed, shouldPlay])
+  }, [isScheduledDrop, phase, shouldPlay])
 
   useEffect(() => {
-    if (!isScheduledDrop || !dropTimestamp || !hasInventoryForDrop) return
-    if (hasSkipped) return
+    if (!isScheduledDrop || !dropTimestamp || !hasInventoryForDrop || hasSkipped) return
+    if (!showIntro && hasPlayed) return
     if (typeof window === 'undefined') return
+
+    const frame = showIntro
+      ? undefined
+      : window.requestAnimationFrame(() => {
+          setShowIntro(true)
+          setHasPlayed(true)
+          try {
+            window.localStorage.setItem('seenDrop', 'true')
+          } catch {
+            // ignore storage errors
+          }
+        })
 
     const tick = () => {
       const remaining = dropTimestamp - Date.now()
       setTimeLeftMs(remaining)
       if (remaining <= 0) {
         setPhase('drop')
-        setHasPlayed(true)
-        setIsOverlayVisible(true)
       } else {
-        setIsOverlayVisible(true)
         setPhase('countdown')
       }
     }
 
     tick()
-    const id = window.setInterval(tick, 1000)
-    return () => window.clearInterval(id)
-  }, [dropTimestamp, hasInventoryForDrop, hasSkipped, isScheduledDrop])
+    const intervalId = window.setInterval(tick, 1000)
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame)
+      window.clearInterval(intervalId)
+    }
+  }, [dropTimestamp, hasInventoryForDrop, hasPlayed, hasSkipped, isScheduledDrop, showIntro])
 
   useEffect(() => {
-    if (isScheduledDrop || !isOverlayVisible || phase !== 'countdown' || countdown === null) return
+    if (isScheduledDrop || !showIntro || phase !== 'countdown' || countdown === null) return
     if (countdown <= 0) {
       const frame = window.requestAnimationFrame(() => {
         setPhase('drop')
@@ -183,27 +211,32 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
 
     const timer = window.setTimeout(() => setCountdown((prev) => (prev ? prev - 1 : 0)), 900)
     return () => window.clearTimeout(timer)
-  }, [countdown, isOverlayVisible, isScheduledDrop, phase])
+  }, [countdown, isScheduledDrop, phase, showIntro])
 
   useEffect(() => {
-    if (phase !== 'drop') return
-    const timer = window.setTimeout(() => {
+    if (!showIntro) return
+
+    const exitTimer = window.setTimeout(() => {
+      setIsExiting(true)
       setPhase('done')
-    }, 2600)
-    return () => window.clearTimeout(timer)
-  }, [phase])
+      setShowIntro(false)
+    }, 3600)
 
-  useEffect(() => {
-    if (phase !== 'done') return
-    const timer = window.setTimeout(() => {
-      setIsOverlayVisible(false)
-    }, 2600)
-    return () => window.clearTimeout(timer)
-  }, [phase])
+    const failsafeTimer = window.setTimeout(() => {
+      setIsExiting(true)
+      setShowIntro(false)
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(exitTimer)
+      window.clearTimeout(failsafeTimer)
+    }
+  }, [showIntro])
 
   const handleSkip = () => {
     setHasSkipped(true)
-    setIsOverlayVisible(false)
+    setIsExiting(true)
+    setShowIntro(false)
     setPhase('done')
     setCountdown(null)
     setTimeLeftMs(null)
@@ -234,13 +267,15 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
 
   return (
     <>
-      <AnimatePresence>
-        {isOverlayVisible && (
+      <AnimatePresence mode="wait" onExitComplete={() => setIsExiting(false)}>
+        {showIntro && (
           <motion.div
-            className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden"
+            key="drop-intro"
+            className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, filter: 'blur(12px)', transition: { duration: 0.7, ease: easeLuxury } }}
+            exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8, ease: easeLuxury } }}
+            style={{ pointerEvents: isExiting ? 'none' : 'auto' }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-black via-brand-black/95 to-brand-black/90" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(201,168,76,0.08),transparent_40%),radial-gradient(circle_at_75%_10%,rgba(255,255,255,0.06),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(201,168,76,0.06),transparent_40%)] blur-[90px]" />
