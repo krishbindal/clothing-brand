@@ -44,6 +44,9 @@ function mapProduct(doc: SanityProduct): Product {
   const createdAt = doc.createdAt || new Date().toISOString()
   const stockCount = typeof doc.stock === 'number' ? doc.stock : undefined
   const inStock = stockCount === undefined ? true : stockCount > 0
+  const soldCount = typeof doc.soldCount === 'number' ? doc.soldCount : undefined
+  const salesVelocity = typeof doc.salesVelocity === 'number' ? doc.salesVelocity : undefined
+  const liveViewers = typeof doc.liveViewers === 'number' ? doc.liveViewers : undefined
   const comparePrice = (doc as unknown as { comparePrice?: number })?.comparePrice
   const rating = (doc as unknown as { rating?: number })?.rating
   const reviewCount = (doc as unknown as { reviewCount?: number })?.reviewCount
@@ -77,6 +80,16 @@ function mapProduct(doc: SanityProduct): Product {
   if (collection?.toLowerCase().includes('drop')) {
     tags.add('new-drop')
   }
+  if (soldCount && soldCount > 120) {
+    tags.add('bestseller')
+  }
+  const inferredVelocity =
+    salesVelocity ??
+    (soldCount ? Math.max(1, Math.round(soldCount / 40)) : undefined) ??
+    (doc.isFeatured ? 6 : undefined)
+  if (inferredVelocity && inferredVelocity >= 6) {
+    tags.add('trending')
+  }
 
   const fallbackSizes = [
     { label: 'S', available: inStock },
@@ -108,6 +121,9 @@ function mapProduct(doc: SanityProduct): Product {
     materials: [],
     inStock,
     stockCount,
+    soldCount,
+    salesVelocity: inferredVelocity,
+    liveViewers: liveViewers ?? Math.max(10, 18 - (stockCount ?? 0)),
     tags: Array.from(tags),
     featured: Boolean(doc.isFeatured),
     rating: rating ? Number(rating) : undefined,

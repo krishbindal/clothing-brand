@@ -16,6 +16,25 @@ export const banner = defineType({
       initialValue: false,
     }),
     defineField({
+      name: 'dropTitle',
+      type: 'string',
+      title: 'Drop Title',
+      description: 'Optional headline shown on the countdown/drop overlay.',
+    }),
+    defineField({
+      name: 'dropDate',
+      type: 'datetime',
+      title: 'Drop Date',
+      description: 'Scheduled launch time. If set and in the future, a countdown will appear until the drop hits.',
+    }),
+    defineField({
+      name: 'isDropActive',
+      type: 'boolean',
+      title: 'Activate Luxury Drop Engine',
+      description: 'Toggle to enable the countdown + drop animation for this campaign.',
+      initialValue: false,
+    }),
+    defineField({
       name: 'image',
       type: 'image',
       title: 'Image',

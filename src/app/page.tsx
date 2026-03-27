@@ -55,6 +55,17 @@ export default async function HomePage() {
       ? urlFor(banner.image).width(2000).height(1200).url()
       : undefined
   const hasCatalog = safeProducts.length > 0 || safeFeatured.length > 0 || safeArrivals.length > 0
+  const liveViewers =
+    safeProducts.reduce((acc, product) => acc + (product.liveViewers ?? 0), 0) || 32
+  const soldLastHour =
+    safeProducts.reduce(
+      (acc, product) =>
+        acc + (product.salesVelocity ?? Math.max(1, Math.round(((product.soldCount ?? 60) || 60) / 70))),
+      0,
+    ) || 8
+  const lowStockFlags = safeProducts.filter(
+    (product) => product.stockCount !== undefined && product.stockCount > 0 && product.stockCount <= 3,
+  ).length
 
   return (
     <>
@@ -67,14 +78,14 @@ export default async function HomePage() {
           <div className="glass rounded-lg px-4 py-3 border border-brand-border/50 flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Live now</p>
-              <p className="text-brand-white font-semibold">🔥 12 people viewing this</p>
+              <p className="text-brand-white font-semibold">🔥 {liveViewers} people viewing</p>
             </div>
             <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
           </div>
           <div className="glass rounded-lg px-4 py-3 border border-brand-border/50 flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Velocity</p>
-              <p className="text-brand-white font-semibold">5 sold in last hour</p>
+              <p className="text-brand-white font-semibold">{soldLastHour} sold in last hour</p>
             </div>
             <span className="text-xs uppercase tracking-[0.25em] text-brand-gold">Moving fast</span>
           </div>
@@ -84,7 +95,9 @@ export default async function HomePage() {
           >
             <div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Collection</p>
-              <p className="text-brand-white font-semibold">Nightfall Atelier</p>
+              <p className="text-brand-white font-semibold">
+                {lowStockFlags ? `${lowStockFlags} pieces at risk` : 'Nightfall Atelier'}
+              </p>
             </div>
             <span className="text-[11px] uppercase tracking-[0.25em] text-brand-gold hover:text-brand-gold-light transition-colors hover-line">
               Explore

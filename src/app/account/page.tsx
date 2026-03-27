@@ -70,7 +70,7 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <Link href="/account/orders" className="rounded-lg border border-brand-border/50 bg-brand-card/60 p-4 hover:border-brand-gold/30 transition-colors">
                 <div className="flex items-center gap-2 text-brand-gray-400 text-xs uppercase tracking-[0.2em]">
                   <ShoppingBag size={16} />
@@ -87,12 +87,32 @@ export default function AccountPage() {
                 <p className="text-brand-white font-semibold mt-2">Curate</p>
                 <p className="text-brand-gray-500 text-xs">Saved picks</p>
               </Link>
+              <Link href="/account/settings" className="rounded-lg border border-brand-border/50 bg-brand-card/60 p-4 hover:border-brand-gold/30 transition-colors">
+                <div className="flex items-center gap-2 text-brand-gray-400 text-xs uppercase tracking-[0.2em]">
+                  <User size={16} />
+                  Settings
+                </div>
+                <p className="text-brand-white font-semibold mt-2">Profile</p>
+                <p className="text-brand-gray-500 text-xs">Details & security</p>
+              </Link>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link href="/shop" className="btn-primary inline-flex items-center gap-2">
                 Shop the drop
                 <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/account/addresses"
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                Manage addresses
+              </Link>
+              <Link
+                href="/account/billing"
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                Billing
               </Link>
               <button
                 onClick={() => void logout()}

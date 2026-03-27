@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
 
 const navLinks = [
+  { label: 'Drop', href: '/drop' },
   { label: 'Shop', href: '/shop', hasDropdown: true },
   { label: 'Collections', href: '/collections' },
   { label: 'About', href: '/about' },

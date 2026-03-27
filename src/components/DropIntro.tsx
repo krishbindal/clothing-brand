@@ -24,6 +24,14 @@ function getDaysSince(date: string): number | null {
   return (Date.now() - value) / (1000 * 60 * 60 * 24)
 }
 
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return [hours, minutes, seconds].map((v) => v.toString().padStart(2, '0')).join(':')
+}
+
 const container = {
   initial: {},
   animate: {
@@ -57,6 +65,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'drop' | 'done'>('idle')
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [timeLeftMs, setTimeLeftMs] = useState<number | null>(null)
   const [hasPlayed, setHasPlayed] = useState(false)
   const [hasSkipped, setHasSkipped] = useState(false)
 
@@ -78,7 +87,15 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
 
   const hasRecentProducts = decoratedProducts.some(({ isRecent }) => isRecent)
   const hasFeaturedBanner = Boolean(banner?.featured)
-  const shouldPlay = !hasSkipped && dropProducts.length >= 4 && (hasRecentProducts || hasFeaturedBanner)
+  const dropTimestamp = banner?.dropDate ? new Date(banner.dropDate).getTime() : null
+  const isScheduledDrop = Boolean(banner?.isDropActive && dropTimestamp)
+  const hasInventoryForDrop = dropProducts.length >= 3
+  const shouldPlay =
+    (isScheduledDrop && hasInventoryForDrop) || (!hasSkipped && hasInventoryForDrop && (hasRecentProducts || hasFeaturedBanner))
+  const waitingViewers = useMemo(
+    () => dropProducts.reduce((acc, item) => acc + (item.liveViewers ?? 0), 0) || 18,
+    [dropProducts]
+  )
 
   const { scrollY } = useScroll()
   const parallaxY = useTransform(scrollY, [0, 600], [0, -70])
@@ -89,7 +106,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   }, [glowOpacity, hasPlayed, isOverlayVisible])
 
   useEffect(() => {
-    if (!shouldPlay || isOverlayVisible || phase !== 'idle') return
+    if (isScheduledDrop || !shouldPlay || isOverlayVisible || phase !== 'idle') return
 
     if (typeof window === 'undefined') return
 
@@ -121,7 +138,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
     }
 
     return cleanup
-  }, [shouldPlay, isOverlayVisible, phase])
+  }, [isScheduledDrop, shouldPlay, isOverlayVisible, phase])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -131,7 +148,30 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   }, [hasPlayed, shouldPlay])
 
   useEffect(() => {
-    if (!isOverlayVisible || phase !== 'countdown' || countdown === null) return
+    if (!isScheduledDrop || !dropTimestamp || !hasInventoryForDrop) return
+    if (hasSkipped) return
+    if (typeof window === 'undefined') return
+
+    const tick = () => {
+      const remaining = dropTimestamp - Date.now()
+      setTimeLeftMs(remaining)
+      if (remaining <= 0) {
+        setPhase('drop')
+        setHasPlayed(true)
+        setIsOverlayVisible(true)
+      } else {
+        setIsOverlayVisible(true)
+        setPhase('countdown')
+      }
+    }
+
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [dropTimestamp, hasInventoryForDrop, hasSkipped, isScheduledDrop])
+
+  useEffect(() => {
+    if (isScheduledDrop || !isOverlayVisible || phase !== 'countdown' || countdown === null) return
     if (countdown <= 0) {
       const frame = window.requestAnimationFrame(() => {
         setPhase('drop')
@@ -143,7 +183,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
 
     const timer = window.setTimeout(() => setCountdown((prev) => (prev ? prev - 1 : 0)), 900)
     return () => window.clearTimeout(timer)
-  }, [countdown, isOverlayVisible, phase])
+  }, [countdown, isOverlayVisible, isScheduledDrop, phase])
 
   useEffect(() => {
     if (phase !== 'drop') return
@@ -166,6 +206,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
     setIsOverlayVisible(false)
     setPhase('done')
     setCountdown(null)
+    setTimeLeftMs(null)
     setHasPlayed(true)
     if (typeof window !== 'undefined') {
       try {
@@ -177,11 +218,19 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   }
 
   const showShopCta = phase === 'drop' || phase === 'done'
-  const overlayTitle = collectionName || banner?.title || 'New Collection Dropped'
+  const overlayTitle = banner?.dropTitle || collectionName || banner?.title || 'New Collection Dropped'
   const overlayEyebrow = banner?.eyebrow || 'New collection · Limited drop'
   const overlaySubtitle =
     banner?.subtitle ||
-    'Precision-crafted silhouettes and live drops curated by the atelier. Watch the latest pieces land in real time.'
+    (isScheduledDrop
+      ? 'Launching soon. Claim your slot before the atelier opens to the public.'
+      : 'Precision-crafted silhouettes and live drops curated by the atelier. Watch the latest pieces land in real time.')
+  const countdownLabel =
+    isScheduledDrop && timeLeftMs !== null && timeLeftMs > 0
+      ? formatCountdown(timeLeftMs)
+      : countdown !== null
+      ? `00:0${Math.max(0, countdown)}`
+      : null
 
   return (
     <>
@@ -234,14 +283,22 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
                 {overlaySubtitle}
               </motion.p>
 
-              {countdown !== null && (
+              {countdownLabel && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, ease: easeLuxury, delay: 0.35 }}
-                  className="mt-5 rounded-full border border-brand-border/60 bg-brand-card/60 px-4 py-2 text-xs uppercase tracking-[0.25em] text-brand-gray-200"
+                  className="mt-6 rounded-2xl border border-brand-border/60 bg-brand-card/70 px-6 py-4 text-center shadow-card-hover"
                 >
-                  Drop starts in 00:0{countdown}
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-brand-gold">Launching Soon</p>
+                  <p className="mt-2 font-display text-3xl sm:text-4xl text-brand-white tracking-tight">
+                    {countdownLabel}
+                  </p>
+                  <p className="mt-2 text-xs text-brand-gray-400">
+                    {isScheduledDrop
+                      ? `${waitingViewers}+ people waiting · ${dropProducts.length} looks ready`
+                      : 'Runway warming up for the next drop'}
+                  </p>
                 </motion.div>
               )}
 
