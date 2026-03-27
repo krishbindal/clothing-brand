@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Flame, ShoppingBag, Sparkles } from 'lucide-react'
 import { useProducts } from '@/hooks'
 import type { Product } from '@/types'
-import { demoProducts } from '@/lib/demoContent'
 import { formatPrice } from '@/lib/utils'
 
 const NAMES = ['Aria', 'Noah', 'Mila', 'Kian', 'Sarai', 'Luca', 'Nyx', 'Leo', 'Iman', 'Rhea', 'Someone']
@@ -23,7 +22,7 @@ interface Signal {
 
 export default function LiveConversionFeed() {
   const { products } = useProducts({ limit: 24 })
-  const pool = useMemo(() => (products && products.length ? products : demoProducts), [products])
+  const pool = useMemo(() => products ?? [], [products])
   const [signal, setSignal] = useState<Signal | null>(null)
   const dismissTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isCartSignal = signal ? Boolean(signal.groupCount || signal.action.includes('cart')) : false
@@ -71,6 +70,8 @@ export default function LiveConversionFeed() {
       if (dismissTimeout.current) clearTimeout(dismissTimeout.current)
     }
   }, [pool])
+
+  if (!pool.length) return null
 
   return (
     <AnimatePresence>
