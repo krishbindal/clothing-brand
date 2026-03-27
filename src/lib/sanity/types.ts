@@ -46,6 +46,7 @@ export interface SanityBanner {
   title: string
   subtitle?: string
   eyebrow?: string
+  featured?: boolean
   image?: SanityImageAsset | null
   cta?: {
     label?: string

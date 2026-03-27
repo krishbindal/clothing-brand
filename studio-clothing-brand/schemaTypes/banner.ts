@@ -9,6 +9,13 @@ export const banner = defineType({
     defineField({ name: 'subtitle', type: 'string', title: 'Subtitle' }),
     defineField({ name: 'eyebrow', type: 'string', title: 'Eyebrow' }),
     defineField({
+      name: 'featured',
+      type: 'boolean',
+      title: 'Featured Banner',
+      description: 'Mark to force the drop intro animation for this campaign.',
+      initialValue: false,
+    }),
+    defineField({
       name: 'image',
       type: 'image',
       title: 'Image',

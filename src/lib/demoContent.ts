@@ -259,6 +259,7 @@ export const demoBanner: SanityBanner = {
   title: 'Nightfall Atelier',
   subtitle: 'A capsule of architectural silhouettes, matte blacks, and quiet metallics crafted for the modern vanguard.',
   eyebrow: 'New Drop · Limited Run',
+  featured: true,
   image: {
     url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1800&q=90',
     width: 1800,
