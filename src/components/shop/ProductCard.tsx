@@ -19,6 +19,11 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   const [quickViewOpen, setQuickViewOpen] = useState(false)
   const lowStock = product.inStock && product.stockCount !== undefined && product.stockCount <= 3
   const isNew = product.tags?.includes('new')
+  const isBestseller = product.tags?.includes('bestseller')
+  const isNewDrop = product.tags?.includes('new-drop')
+  const stockLeft =
+    product.stockCount ??
+    product.sizes?.find((size) => typeof size.stockCount === 'number')?.stockCount
 
   return (
     <div className="group relative">
@@ -46,15 +51,15 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
           <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-            {isNew && (
+            {(isNew || isNewDrop) && (
               <span className="inline-flex items-center gap-1 bg-brand-gold/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em] shadow-gold-subtle">
                 <Sparkles size={12} />
-                New
+                {isNewDrop ? 'New Drop' : 'New'}
               </span>
             )}
             {lowStock && (
-              <span className="inline-flex items-center gap-1 bg-amber-500/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em]">
-                Low stock
+              <span className="inline-flex items-center gap-1 bg-amber-500/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em] shadow-gold-subtle">
+                {stockLeft ? `Only ${stockLeft} left` : 'Low stock'}
               </span>
             )}
           </div>
@@ -62,6 +67,11 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           {product.tags?.includes('trending') && (
             <span className="absolute top-4 right-4 z-10 bg-brand-gold text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.25em] shadow-gold-subtle">
               Trending
+            </span>
+          )}
+          {isBestseller && !product.tags?.includes('trending') && (
+            <span className="absolute top-4 right-4 z-10 bg-brand-white text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.25em] shadow-gold-subtle">
+              Bestseller
             </span>
           )}
 
