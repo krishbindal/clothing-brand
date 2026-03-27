@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthOptions } from 'next-auth'
+import NextAuth, { type NextAuthConfig } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
@@ -9,10 +9,10 @@ import { loginSchema } from '@/lib/validations/auth'
 type AuthHandler = ReturnType<typeof NextAuth>
 
 let authHandler: AuthHandler | null = null
-let cachedOptions: NextAuthOptions | null = null
+let cachedOptions: NextAuthConfig | null = null
 
 const buildProviders = () => {
-  const providers = [
+  const providers: NextAuthConfig['providers'] = [
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -64,7 +64,7 @@ const buildProviders = () => {
   return providers
 }
 
-export const getAuthOptions = (): NextAuthOptions => {
+export const getAuthOptions = (): NextAuthConfig => {
   if (!cachedOptions) {
     const nextAuthUrl = process.env.NEXTAUTH_URL
     const nextAuthSecret = process.env.NEXTAUTH_SECRET
@@ -128,14 +128,17 @@ const getAuthHandler = (): AuthHandler => {
 }
 
 export const handlers = {
-  GET: (...args: Parameters<AuthHandler['handlers']['GET']>) => getAuthHandler().handlers.GET(...args),
+  GET: (...args: Parameters<AuthHandler['handlers']['GET']>) =>
+    getAuthHandler().handlers.GET(...args),
   POST: (...args: Parameters<AuthHandler['handlers']['POST']>) =>
     getAuthHandler().handlers.POST(...args),
 }
 
-export const auth = (...args: Parameters<AuthHandler['auth']>) => getAuthHandler().auth(...args)
+export const auth = ((...args: Parameters<AuthHandler['auth']>) =>
+  getAuthHandler().auth(...args)) as AuthHandler['auth']
 
-export const signIn = (...args: Parameters<AuthHandler['signIn']>) => getAuthHandler().signIn(...args)
+export const signIn = ((...args: Parameters<AuthHandler['signIn']>) =>
+  getAuthHandler().signIn(...args)) as AuthHandler['signIn']
 
-export const signOut = (...args: Parameters<AuthHandler['signOut']>) =>
-  getAuthHandler().signOut(...args)
+export const signOut = ((...args: Parameters<AuthHandler['signOut']>) =>
+  getAuthHandler().signOut(...args)) as AuthHandler['signOut']
