@@ -4,12 +4,14 @@ import { createImageUrlBuilder, type SanityImageSource } from '@sanity/image-url
 export const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '51heegbl'
 export const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
 export const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2024-03-26'
+export const isSanityConfigured = Boolean(projectId && dataset)
 
-export const config: ClientConfig = {
+const config: ClientConfig = {
   projectId,
   dataset,
   apiVersion,
   useCdn: process.env.NODE_ENV === 'production',
+  token: process.env.SANITY_API_TOKEN,
 }
 
 export const sanityClient = createClient(config)
@@ -20,16 +22,23 @@ export function urlFor(source: SanityImageSource) {
   return builder.image(source)
 }
 
-export async function safeFetch<T>(operation: string, query: string, params: Record<string, unknown> = {}, fallback: T): Promise<T> {
-  if (!projectId || !dataset) {
-    console.warn(`Sanity fetch skipped (${operation}): projectId or dataset not configured`)
-    return fallback
-  }
+export async function fetchSanityData<T>(
+  operationName: string,
+  query: string,
+  { params = {}, tags, revalidate = 60, fallback }: { params?: Record<string, unknown>, tags?: string[], revalidate?: number, fallback: T },
+): Promise<T> {
+  if (!isSanityConfigured) return fallback
+
   try {
-    return await sanityClient.fetch(query, params)
+    return await sanityClient.fetch(query, params, {
+      next: {
+        revalidate,
+        tags,
+      },
+    })
   } catch (error) {
     const details = error instanceof Error ? error.message : String(error)
-    console.error(`Sanity fetch failed (${operation}): ${details}`)
+    console.error(`Sanity fetch failed (${operationName}): ${details}`)
     return fallback
   }
 }
