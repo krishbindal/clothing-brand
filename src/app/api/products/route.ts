@@ -1,6 +1,11 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllProducts, getFeaturedProducts, getProductBySlug } from '@/lib/sanity'
+import {
+  getAllProducts,
+  getFeaturedProducts,
+  getProductBySlug,
+  getProductsByCategory,
+} from '@/lib/sanity'
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +25,9 @@ export async function GET(req: NextRequest) {
     const products =
       featured === 'true'
         ? await getFeaturedProducts()
-        : await getAllProducts(category || undefined)
+        : category
+          ? await getProductsByCategory(category)
+          : await getAllProducts()
     const total = products.length
     const paginatedProducts = products.slice(skip, skip + limit)
 
