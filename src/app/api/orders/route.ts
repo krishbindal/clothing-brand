@@ -4,6 +4,7 @@ import { Prisma, OrderStatus } from '@prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { Address, CartItem } from '@/types'
 import { sendOrderConfirmationEmail } from '@/lib/email'
+import { getDemoOrders } from '@/lib/demoContent'
 
 interface OrderPayload {
   userId?: string
@@ -172,10 +173,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json({ orders: [] })
-    }
-
     const searchParams = req.nextUrl.searchParams
     const scope = searchParams.get('scope')
     const userId = searchParams.get('userId')
@@ -183,6 +180,19 @@ export async function GET(req: NextRequest) {
     const email = searchParams.get('email')
     const limitParam = searchParams.get('limit')
     const limit = limitParam ? Math.min(parseInt(limitParam, 10) || 50, MAX_LIMIT) : 50
+
+    if (!process.env.DATABASE_URL) {
+      const demoOrders = getDemoOrders(userId || undefined).filter((order) =>
+        scope === 'admin'
+          ? status
+            ? order.status === status
+            : true
+          : userId
+          ? order.userId === userId
+          : true
+      )
+      return NextResponse.json({ orders: demoOrders.slice(0, limit) })
+    }
 
     const where: Prisma.OrderWhereInput =
       scope === 'admin'

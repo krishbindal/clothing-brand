@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import HeroSection from '@/components/home/HeroSection'
 import Footer from '@/components/layout/Footer'
 import ProductGrid from '@/components/shop/ProductGrid'
@@ -34,13 +35,49 @@ export default async function HomePage() {
   const trendingFallback = (safeFeatured.length ? safeFeatured : safeProducts).slice(0, 4)
   const arrivalsFallback = safeArrivals.slice(0, 4)
   const completeLook = (safeProducts.length ? safeProducts : safeArrivals).slice(0, 4)
-  const heroImage = banner?.image ? urlFor(banner.image).width(2000).height(1200).url() : undefined
+  const heroImage =
+    banner?.image && 'url' in banner.image && banner.image.url
+      ? banner.image.url
+      : banner?.image
+      ? urlFor(banner.image).width(2000).height(1200).url()
+      : undefined
   const hasCatalog = safeProducts.length > 0 || safeFeatured.length > 0 || safeArrivals.length > 0
 
   return (
     <>
       <AnnouncementBar />
-      <LiveActivityTicker anchor="Global atelier" />
+      <LiveActivityTicker anchor="Global atelier" products={safeProducts.length ? safeProducts : spotlight} />
+
+      <section className="bg-brand-black/80 border-b border-brand-border/30 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="glass rounded-lg px-4 py-3 border border-brand-border/50 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Live now</p>
+              <p className="text-brand-white font-semibold">🔥 12 people viewing this</p>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
+          </div>
+          <div className="glass rounded-lg px-4 py-3 border border-brand-border/50 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Velocity</p>
+              <p className="text-brand-white font-semibold">5 sold in last hour</p>
+            </div>
+            <span className="text-xs uppercase tracking-[0.25em] text-brand-gold">Moving fast</span>
+          </div>
+          <Link
+            href="/shop"
+            className="glass rounded-lg px-4 py-3 border border-brand-border/50 flex items-center justify-between hover:border-brand-gold/30 transition-colors"
+          >
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gray-500">Collection</p>
+              <p className="text-brand-white font-semibold">Nightfall Atelier</p>
+            </div>
+            <span className="text-[11px] uppercase tracking-[0.25em] text-brand-gold hover:text-brand-gold-light transition-colors hover-line">
+              Explore
+            </span>
+          </Link>
+        </div>
+      </section>
       <HeroSection
         title={banner?.title || 'WEAR THE FUTURE'}
         subtitle={
