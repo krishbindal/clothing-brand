@@ -15,6 +15,7 @@ interface ProductShowcaseProps {
 
 export default function ProductShowcase({ products }: ProductShowcaseProps) {
   const [activeTab, setActiveTab] = useState('All')
+  const isEmpty = products.length === 0
 
   useEffect(() => {
     const stored = localStorage.getItem('featured-tab')
@@ -35,6 +36,33 @@ export default function ProductShowcase({ products }: ProductShowcaseProps) {
         return products
     }
   }, [activeTab, products])
+
+  if (isEmpty) {
+    return (
+      <section className="section-padding bg-brand-black relative">
+        <div className="container-wide">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+            <div>
+              <p className="section-overline">Featured</p>
+              <h2 className="section-title">The Drop</h2>
+              <p className="text-brand-gray-500 mt-2">New edits are being styled. Stay close.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-brand-border/50 bg-brand-card/80 h-full overflow-hidden">
+                <div className="aspect-[4/5] bg-brand-dark/60 animate-pulse" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 w-1/2 bg-brand-border/40 rounded animate-pulse" />
+                  <div className="h-3 w-2/3 bg-brand-border/30 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="section-padding bg-brand-black relative">

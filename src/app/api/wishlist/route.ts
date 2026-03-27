@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const wishlistSchema = z.object({ productId: z.string().min(1) })
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

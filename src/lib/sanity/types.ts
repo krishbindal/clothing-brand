@@ -18,26 +18,26 @@ export interface SanityImageAsset {
 }
 
 export interface SanityProduct {
-  id: string
-  name: string
-  slug?: string
+  _id: string
+  title?: string
+  slug?: string | { current?: string }
   price: number
   description?: string
+  images?: SanityImageAsset[]
   image?: SanityImageAsset | null
   stock?: number
-  featured?: boolean
-  images?: SanityImageAsset[]
-  category?: string
-  categorySlug?: string
+  isFeatured?: boolean
+  category?: string | { name?: string; slug?: { current?: string } }
+  categorySlug?: string | { current?: string }
   tags?: string[]
   createdAt?: string
   updatedAt?: string
 }
 
 export interface SanityCategory {
-  id: string
+  _id: string
   name: string
-  slug?: string
+  slug?: string | { current?: string }
   productCount?: number
   cover?: SanityImageAsset | null
 }
@@ -45,7 +45,10 @@ export interface SanityCategory {
 export interface SanityBanner {
   title: string
   subtitle?: string
+  eyebrow?: string
   image?: SanityImageAsset | null
-  ctaText?: string
-  ctaLink?: string
+  cta?: {
+    label?: string
+    href?: string
+  }
 }

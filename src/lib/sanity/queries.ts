@@ -6,8 +6,11 @@ export const getAllProductsQuery = groq`
     title,
     "slug": slug.current,
     price,
+    description,
     images,
     "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
     isFeatured,
     createdAt
   }
@@ -19,8 +22,27 @@ export const getFeaturedProductsQuery = groq`
     title,
     "slug": slug.current,
     price,
+    description,
     images,
     "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
+    isFeatured,
+    createdAt
+  }
+`
+
+export const getNewArrivalsQuery = groq`
+  *[_type == "product"] | order(createdAt desc)[0...8] {
+    _id,
+    title,
+    "slug": slug.current,
+    price,
+    description,
+    images,
+    "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
     isFeatured,
     createdAt
   }
@@ -40,6 +62,7 @@ export const getBannerQuery = groq`
     title,
     subtitle,
     image,
+    eyebrow,
     cta
   }
 `
@@ -50,8 +73,11 @@ export const getProductBySlugQuery = groq`
     title,
     "slug": slug.current,
     price,
+    description,
     images,
     "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
     isFeatured,
     createdAt
   }
@@ -71,8 +97,11 @@ export const getProductsByCategorySlugQuery = groq`
     title,
     "slug": slug.current,
     price,
+    description,
     images,
     "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
     isFeatured,
     createdAt
   }
@@ -84,8 +113,11 @@ export const searchProductsQuery = groq`
     title,
     "slug": slug.current,
     price,
+    description,
     images,
     "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
     isFeatured,
     createdAt
   }

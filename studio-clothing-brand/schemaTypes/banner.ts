@@ -7,6 +7,7 @@ export const banner = defineType({
   fields: [
     defineField({ name: 'title', type: 'string', title: 'Title', validation: (Rule) => Rule.required() }),
     defineField({ name: 'subtitle', type: 'string', title: 'Subtitle' }),
+    defineField({ name: 'eyebrow', type: 'string', title: 'Eyebrow' }),
     defineField({
       name: 'image',
       type: 'image',
@@ -15,15 +16,13 @@ export const banner = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'ctaText',
-      type: 'string',
-      title: 'CTA Text',
-    }),
-    defineField({
-      name: 'ctaLink',
-      type: 'string',
-      title: 'CTA Link',
-      validation: (Rule) => Rule.required(),
+      name: 'cta',
+      type: 'object',
+      title: 'CTA',
+      fields: [
+        defineField({ name: 'label', type: 'string', title: 'Label', validation: (Rule) => Rule.required() }),
+        defineField({ name: 'href', type: 'string', title: 'Href', validation: (Rule) => Rule.required() }),
+      ],
     }),
   ],
 })
