@@ -63,16 +63,17 @@ async function HeroBlock() {
   const [banner, arrivals] = await Promise.all([bannerPromise, newArrivalsPromise])
   const heroTitle = banner?.title || 'WEAR THE FUTURE'
   const heroSubtitle =
+    banner?.subtitle ||
     'Precision-crafted silhouettes, deep tonal textures, and limited drops designed for those who lead with quiet force.'
-  const heroImage = banner?.image || arrivals[0]?.images?.[0]?.url || null
+  const heroImage = banner?.image?.url || arrivals[0]?.images?.[0]?.url || null
 
   return (
     <HeroSection
       title={heroTitle}
       subtitle={heroSubtitle}
       imageUrl={heroImage}
-      ctaHref={banner?.link || '/shop'}
-      ctaLabel="Shop the Capsule"
+      ctaHref={banner?.ctaLink || '/shop'}
+      ctaLabel={banner?.ctaText || 'Shop the Capsule'}
       eyebrow="Live from the Atelier"
     />
   )
@@ -80,6 +81,14 @@ async function HeroBlock() {
 
 async function SpotlightBlock() {
   const catalog = await catalogPromise
+  if (!catalog.length) {
+    return (
+      <EmptyProductsSection
+        title="Spotlight"
+        message="No products are available yet. Stay tuned for the first drop."
+      />
+    )
+  }
   const spotlight = catalog.slice(0, 8)
   if (!spotlight.length) return <SectionSkeleton title="Spotlight" />
 
@@ -89,6 +98,15 @@ async function SpotlightBlock() {
 async function NewArrivalsBlock() {
   const [arrivals, catalog] = await Promise.all([newArrivalsPromise, catalogPromise])
   const collection = arrivals.length ? arrivals : catalog.slice(0, 8)
+
+  if (!collection.length) {
+    return (
+      <EmptyProductsSection
+        title="Just Dropped"
+        message="We haven't published products yet—check back soon for the latest arrivals."
+      />
+    )
+  }
 
   return (
     <section className="bg-brand-black border-t border-brand-border/30">
@@ -116,6 +134,15 @@ async function TrendingBlock() {
   const [trending, catalog] = await Promise.all([trendingPromise, catalogPromise])
   const fallback = catalog.filter((p) => p.featured).slice(0, 6)
   const collection = trending.length ? trending : fallback.length ? fallback : catalog.slice(0, 6)
+
+  if (!collection.length) {
+    return (
+      <EmptyProductsSection
+        title="Trending now"
+        message="Trending products will appear here once items are published."
+      />
+    )
+  }
 
   return (
     <section className="bg-brand-black border-t border-brand-border/30">
@@ -205,13 +232,7 @@ async function PersonalizedBlock() {
   const fallback = featuredPool.length ? featuredPool : catalog.slice(0, 6)
 
   if (!fallback.length) {
-    return (
-      <section className="bg-brand-black border-t border-brand-border/30">
-        <div className="container-wide py-14">
-          <SectionSkeleton title="For You" />
-        </div>
-      </section>
-    )
+    return <EmptyProductsSection title="For You" message="Personalized picks will unlock once products are live." />
   }
 
   return <PersonalizedRail fallback={fallback} catalog={catalog} />
@@ -261,4 +282,27 @@ function SectionSkeleton({ title }: { title: string }) {
 
 function CategorySkeleton() {
   return <SectionSkeleton title="Collections" />
+}
+
+function EmptyProductsSection({ title, message }: { title: string; message: string }) {
+  console.warn(`Empty catalog: ${title} section showing fallback UI`)
+
+  return (
+    <section className="bg-brand-black border-t border-brand-border/30">
+      <div className="container-wide py-16 space-y-6 text-center">
+        <p className="section-overline">{title}</p>
+        <h2 className="section-title">Catalog is warming up</h2>
+        <p className="text-brand-gray-400 max-w-2xl mx-auto">{message}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, idx) => (
+            <div key={idx} className="space-y-3">
+              <Skeleton className="aspect-[4/5] w-full" />
+              <Skeleton className="h-4 w-3/4 mx-auto" />
+              <Skeleton className="h-3 w-1/2 mx-auto" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 }

@@ -23,14 +23,15 @@ export interface SanityProduct {
   slug?: string
   price: number
   description?: string
+  image?: SanityImageAsset | null
   stock?: number
   featured?: boolean
   images?: SanityImageAsset[]
   category?: string
   categorySlug?: string
   tags?: string[]
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SanityCategory {
@@ -43,6 +44,8 @@ export interface SanityCategory {
 
 export interface SanityBanner {
   title: string
-  image?: string
-  link?: string
+  subtitle?: string
+  image?: SanityImageAsset | null
+  ctaText?: string
+  ctaLink?: string
 }

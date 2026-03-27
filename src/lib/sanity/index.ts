@@ -12,11 +12,19 @@ import {
   trendingProductsQuery,
 } from './queries'
 import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
-import type { Category, Product } from '@/types'
+import type { Category, Product, ProductImage } from '@/types'
 
 export { sanityClient, urlFor }
 
-function mapImage(img: SanityImageAsset | undefined, fallbackAlt: string) {
+export interface HomepageBanner {
+  title: string
+  subtitle?: string
+  ctaText?: string
+  ctaLink?: string
+  image?: ProductImage
+}
+
+function mapImage(img: SanityImageAsset | undefined, fallbackAlt: string): ProductImage | null {
   if (!img) return null
 
   const width =
@@ -47,7 +55,16 @@ function mapImage(img: SanityImageAsset | undefined, fallbackAlt: string) {
 }
 
 function mapProduct(doc: SanityProduct): Product {
-  const creationDate = doc.createdAt ? new Date(doc.createdAt) : null
+  const imageSources =
+    doc.images && doc.images.length
+      ? doc.images
+      : doc.image
+        ? [doc.image]
+        : []
+  const creationDateValue = doc.createdAt || doc.updatedAt
+  const createdAt = doc.createdAt || creationDateValue || new Date().toISOString()
+  const updatedAt = doc.updatedAt || creationDateValue || createdAt
+  const creationDate = creationDateValue ? new Date(creationDateValue) : null
   const isNew =
     creationDate !== null ? Date.now() - creationDate.getTime() < 1000 * 60 * 60 * 24 * 30 : false
   const computedTags = new Set([
@@ -64,8 +81,8 @@ function mapProduct(doc: SanityProduct): Product {
     description: doc.description || '',
     price: doc.price,
     images:
-      doc.images
-        ?.map((img) => mapImage(img, doc.name))
+      imageSources
+        .map((img) => mapImage(img, doc.name))
         .filter((img): img is NonNullable<typeof img> => Boolean(img)) || [],
     category: doc.category || '',
     sizes: [],
@@ -75,8 +92,8 @@ function mapProduct(doc: SanityProduct): Product {
     stockCount: doc.stock,
     tags: Array.from(computedTags),
     featured: Boolean(doc.featured),
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
+    createdAt,
+    updatedAt,
   }
 }
 
@@ -90,6 +107,18 @@ function mapCategory(doc: SanityCategory): Category {
   }
 }
 
+function mapBanner(doc: SanityBanner): HomepageBanner {
+  const image = doc.image ? mapImage(doc.image, doc.title) : null
+
+  return {
+    title: doc.title,
+    subtitle: doc.subtitle,
+    ctaText: doc.ctaText,
+    ctaLink: doc.ctaLink,
+    ...(image ? { image } : {}),
+  }
+}
+
 export async function getAllProducts(): Promise<Product[]> {
   const docs = await safeFetch<SanityProduct[]>(
     'getAllProducts',
@@ -97,6 +126,10 @@ export async function getAllProducts(): Promise<Product[]> {
     {},
     [],
   )
+  if (!docs.length) {
+    console.warn('Sanity: no products found for getAllProducts')
+    return []
+  }
   return docs.map(mapProduct)
 }
 
@@ -170,8 +203,9 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   return doc ? mapCategory(doc) : null
 }
 
-export async function getHomepageBanner(): Promise<SanityBanner | null> {
-  return safeFetch<SanityBanner | null>('getHomepageBanner', bannerQuery, {}, null)
+export async function getHomepageBanner(): Promise<HomepageBanner | null> {
+  const doc = await safeFetch<SanityBanner | null>('getHomepageBanner', bannerQuery, {}, null)
+  return doc ? mapBanner(doc) : null
 }
 
 export async function searchProducts(searchQuery: string): Promise<Product[]> {
