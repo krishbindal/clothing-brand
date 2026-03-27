@@ -10,6 +10,7 @@ import CategoryCarousel from '@/components/home/CategoryCarousel'
 import LiveActivityTicker from '@/components/home/LiveActivityTicker'
 import ProductShowcase from '@/components/home/ProductShowcase'
 import SocialProof from '@/components/home/SocialProof'
+import DropIntro from '@/components/DropIntro'
 import { getAllProducts, getFeaturedProducts, getBanner, getCategories, getNewArrivals, urlFor } from '@/lib/sanity'
 
 export const revalidate = 60
@@ -45,6 +46,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <DropIntro />
       <AnnouncementBar />
       <LiveActivityTicker anchor="Global atelier" products={safeProducts.length ? safeProducts : spotlight} />
 
