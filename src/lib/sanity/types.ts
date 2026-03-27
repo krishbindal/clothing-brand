@@ -1,25 +1,34 @@
-export interface SanityProductDocument {
+export interface SanityImageAsset {
+  url: string
+  width?: number
+  height?: number
+  alt?: string
+}
+
+export interface SanityProduct {
   id: string
   name: string
   slug?: string
-  description?: string
   price: number
-  comparePrice?: number
-  inStock: boolean
-  images?: string[]
-  category?: string
-  sizes?: string[]
-  colors?: string[]
+  description?: string
+  stock?: number
   featured?: boolean
+  images?: SanityImageAsset[]
+  category?: string
+  categorySlug?: string
   createdAt: string
   updatedAt: string
 }
 
-export interface SanityCategoryDocument {
+export interface SanityCategory {
   id: string
   name: string
   slug?: string
-  image?: string
-  description?: string
   productCount?: number
+}
+
+export interface SanityBanner {
+  title: string
+  image?: string
+  link?: string
 }

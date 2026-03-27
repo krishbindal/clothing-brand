@@ -50,69 +50,63 @@ The `/checkout` page creates a Razorpay order via `/api/checkout/razorpay` and s
 
 ## Sanity CMS Setup
 
-This project supports Sanity as the content source for products, homepage content, and collections.
+This project uses a fresh Sanity Studio located at `studio-clothing-brand`.
 
 ### 1) Install dependencies
-
-Already included in this repository:
-
-- `@sanity/client`
-- `@sanity/image-url`
-- `next-sanity`
-
-### 2) Initialize Sanity Studio
 
 From the project root:
 
 ```bash
-npx sanity init
+cd studio-clothing-brand
+npm install
 ```
 
-Use your Sanity project, and select/create the `production` dataset.
+### 2) Run the studio locally
+
+```bash
+cd studio-clothing-brand
+npm run dev
+```
+
+The studio uses the `production` dataset on project `51heegbl`.
 
 ### 3) Environment variables
 
 Create a `.env.local` file with:
 
 ```bash
-NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
+NEXT_PUBLIC_SANITY_PROJECT_ID=51heegbl
 NEXT_PUBLIC_SANITY_DATASET=production
-SANITY_API_TOKEN=your_read_token
 ```
 
 ### 4) Schema files
 
-Schemas are defined in:
+Schemas are defined in `studio-clothing-brand/schemaTypes`:
 
-- `sanity/schemaTypes/product.ts`
-- `sanity/schemaTypes/collection.ts`
-- `sanity/schemaTypes/homepage.ts`
-- `sanity/schemaTypes/index.ts`
-- `sanity.config.ts`
+- `product.ts`
+- `category.ts`
+- `banner.ts`
+- `index.ts`
 
 ### 5) Query and integration layer
 
-Sanity integration is implemented in:
+Sanity integration now lives in:
 
-- `src/lib/sanity.ts`
+- `src/lib/sanity/client.ts`
+- `src/lib/sanity/queries.ts`
+- `src/lib/sanity/index.ts`
+- `src/lib/sanity/types.ts`
 
 Exposed helpers include:
 
 - `getAllProducts`
+- `getProductsByCategory`
 - `getProductBySlug`
 - `getFeaturedProducts`
-- `getHomepageContent`
-- `getCollections`
-- `urlFor` (Sanity image URL builder)
+- `getCategories`
+- `searchProducts`
+- `getHomepageBanner`
 
-### 6) Client content workflow
+### 6) Revalidation / ISR
 
-Once configured, non-technical users can:
-
-- Add/edit products (`product` documents)
-- Update homepage hero and featured products (`homepage` document)
-- Manage collections (`collection` documents)
-
-### 7) Revalidation / ISR
-
-CMS-backed data uses Next.js revalidation (`revalidate: 60`) for performant near-real-time content refresh.
+CMS-backed data uses safe fetches with fallbacks to avoid runtime crashes when content is empty.
