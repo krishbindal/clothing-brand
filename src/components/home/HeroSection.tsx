@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -27,6 +28,13 @@ export default function HeroSection({
   secondaryCtaLabel,
   secondaryCtaHref,
 }: HeroSectionProps) {
+  imageUrl?: string | null
+  ctaHref?: string
+  ctaLabel?: string
+  eyebrow?: string
+}
+
+export default function HeroSection({ title, subtitle, imageUrl, ctaHref = '/shop', ctaLabel = 'Shop the Drop', eyebrow }: HeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -48,7 +56,6 @@ export default function HeroSection({
       ref={containerRef}
       className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-brand-black"
     >
-      {/* Video Background */}
       <motion.div style={{ y, scale }} className="absolute inset-0">
         {imageUrl ? (
           <Image
@@ -79,53 +86,40 @@ export default function HeroSection({
         {/* Gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/5 via-brand-black/50 to-brand-black z-10" />
         <div className="absolute inset-0 bg-noise opacity-30 z-10" />
+          <div className="absolute inset-0">
+            <Image
+              src={imageUrl}
+              alt={title || 'LUXE banner'}
+              fill
+              priority
+              className="object-cover opacity-80"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-brand-black/20 via-brand-black/60 to-brand-black" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-brand-black/5 via-brand-black/50 to-brand-black">
+            <div className="absolute inset-0 bg-noise opacity-30" />
+            <motion.div
+              style={{ y: overlayY }}
+              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-gold/8 rounded-full blur-[180px]"
+            />
+            <motion.div
+              animate={{ opacity: [0.15, 0.35, 0.15], scale: [1, 1.02, 1] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-brand-gold/10"
+            />
+            <motion.div
+              animate={{ opacity: [0.1, 0.25, 0.1], scale: [1.02, 1, 1.02] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full border border-brand-gold/5"
+            />
+          </div>
+        )}
 
-        {/* Cinematic gold orbs */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,168,76,0.18),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_15%,rgba(232,201,122,0.12),transparent_40%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_70%,rgba(201,168,76,0.06),transparent_35%)]" />
-
-        {/* Central glow orb */}
-        <motion.div
-          style={{ y: overlayY }}
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-gold/8 rounded-full blur-[180px]"
-        />
-
-        {/* Animated concentric rings */}
-        <motion.div
-          animate={{ opacity: [0.15, 0.35, 0.15], scale: [1, 1.02, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-brand-gold/10"
-        />
-        <motion.div
-          animate={{ opacity: [0.1, 0.25, 0.1], scale: [1.02, 1, 1.02] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full border border-brand-gold/5"
-        />
-
-        {/* Floating particles */}
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full bg-brand-gold/30"
-            style={{
-              left: `${20 + i * 15}%`,
-              top: `${30 + (i % 3) * 20}%`,
-            }}
-            animate={{
-              y: [-20, 20, -20],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 4 + i,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: i * 0.8,
-            }}
-          />
-        ))}
-
-        {/* Cinematic light sweeps */}
         <motion.div
           animate={{
             x: ['-100%', '200%'],
@@ -150,7 +144,7 @@ export default function HeroSection({
         >
           <span className="inline-flex items-center gap-2.5 text-brand-gold text-[11px] font-semibold uppercase tracking-[0.45em] px-5 py-2.5 rounded-full border border-brand-gold/20 bg-brand-gold/5 backdrop-blur-sm">
             <Sparkles size={12} className="animate-breathe" />
-            New Collection · SS25
+            {eyebrow || 'New Collection · SS25'}
           </span>
         </motion.div>
 
@@ -197,6 +191,8 @@ export default function HeroSection({
         >
           <Link href={primaryHref} className="btn-primary group min-w-[220px]">
             {primaryLabel}
+          <Link href={ctaHref} className="btn-primary group min-w-[220px]">
+            {ctaLabel}
             <ArrowRight
               size={15}
               className="transition-transform duration-500 ease-luxury group-hover:translate-x-2"

@@ -28,6 +28,7 @@ export interface SanityProduct {
   images?: SanityImageAsset[]
   category?: string
   categorySlug?: string
+  tags?: string[]
   createdAt: string
   updatedAt: string
 }
@@ -38,6 +39,7 @@ export interface SanityCategory {
   slug?: string
   productCount?: number
   coverImage?: SanityImageAsset
+  cover?: SanityImageAsset | null
 }
 
 export interface SanityBanner {

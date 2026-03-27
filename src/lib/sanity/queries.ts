@@ -9,6 +9,7 @@ export const productFields = groq`
     description,
     stock,
     featured,
+    tags,
     "images": images[]{
       "url": asset->url,
       "asset": asset->{
@@ -54,6 +55,10 @@ export const trendingProductsQuery = groq`
   *[_type == "product" && featured == true] | order(_createdAt desc)[0...6] ${productFields}
 `
 
+export const newArrivalsQuery = groq`
+  *[_type == "product"] | order(_createdAt desc)[0...8] ${productFields}
+`
+
 export const productBySlugQuery = groq`
   *[_type == "product" && slug.current == $slug][0] ${productFields}
 `
@@ -66,6 +71,8 @@ export const categoriesQuery = groq`
     "productCount": count(*[_type == "product" && references(^._id)]),
     "coverImage": *[_type == "product" && references(^._id)][0].images[0]{
       ...,
+    "cover": *[_type == "product" && references(^._id)][0].images[0]{
+      "url": asset->url,
       "asset": asset->{
         _id,
         url,
@@ -78,6 +85,10 @@ export const categoriesQuery = groq`
           }
         }
       }
+      },
+      "alt": coalesce(alt, asset->altText, name),
+      "width": asset->metadata.dimensions.width,
+      "height": asset->metadata.dimensions.height
     }
   }
 `

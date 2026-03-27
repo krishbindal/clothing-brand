@@ -5,6 +5,7 @@ import {
   categoriesQuery,
   categoryBySlugQuery,
   featuredProductsQuery,
+  newArrivalsQuery,
   productBySlugQuery,
   productsByCategoryQuery,
   searchProductsQuery,
@@ -57,6 +58,15 @@ function mapProduct(doc: SanityProduct): Product {
   if (isNew) tags.push('new')
   if (doc.featured) tags.push('trending')
   if (doc.stock !== undefined && doc.stock > 0 && doc.stock <= 3) tags.push('low-stock')
+  const creationDate = doc.createdAt ? new Date(doc.createdAt) : null
+  const isNew =
+    creationDate !== null ? Date.now() - creationDate.getTime() < 1000 * 60 * 60 * 24 * 30 : false
+  const computedTags = new Set([
+    ...(doc.tags || []),
+    ...(doc.featured ? ['trending', 'bestseller'] : []),
+    ...(isNew ? ['new'] : []),
+    ...(doc.stock !== undefined && doc.stock > 0 && doc.stock <= 3 ? ['low-stock'] : []),
+  ])
 
   return {
     id: doc.id,
@@ -75,6 +85,7 @@ function mapProduct(doc: SanityProduct): Product {
     inStock: (doc.stock ?? 0) > 0,
     stockCount: doc.stock,
     tags,
+    tags: Array.from(computedTags),
     featured: Boolean(doc.featured),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -89,6 +100,7 @@ function mapCategory(doc: SanityCategory): Category {
     slug: doc.slug || '',
     productCount: doc.productCount,
     image: cover?.url,
+    image: mapImage(doc.cover || undefined, doc.name)?.url,
   }
 }
 
@@ -126,6 +138,10 @@ export async function getNewArrivals(): Promise<Product[]> {
   const docs = await safeFetch<SanityProduct[]>(
     'getNewArrivals',
     newArrivalsQuery,
+export async function getTrendingProducts(): Promise<Product[]> {
+  const docs = await safeFetch<SanityProduct[]>(
+    'getTrendingProducts',
+    trendingProductsQuery,
     {},
     [],
   )
@@ -136,6 +152,10 @@ export async function getTrendingProducts(): Promise<Product[]> {
   const docs = await safeFetch<SanityProduct[]>(
     'getTrendingProducts',
     trendingProductsQuery,
+export async function getNewArrivals(): Promise<Product[]> {
+  const docs = await safeFetch<SanityProduct[]>(
+    'getNewArrivals',
+    newArrivalsQuery,
     {},
     [],
   )
