@@ -1,8 +1,20 @@
 export interface SanityImageAsset {
-  url: string
+  url?: string
   width?: number
   height?: number
   alt?: string
+  asset?: {
+    _id: string
+    url?: string
+    altText?: string
+    metadata?: {
+      lqip?: string
+      dimensions?: {
+        width?: number
+        height?: number
+      }
+    }
+  }
 }
 
 export interface SanityProduct {

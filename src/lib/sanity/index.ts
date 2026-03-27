@@ -9,10 +9,40 @@ import {
   productsByCategoryQuery,
   searchProductsQuery,
 } from './queries'
-import type { SanityBanner, SanityCategory, SanityProduct } from './types'
+import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
 import type { Category, Product } from '@/types'
 
 export { sanityClient, urlFor }
+
+function mapImage(img: SanityImageAsset | undefined, fallbackAlt: string) {
+  if (!img) return null
+
+  const width =
+    img.asset?.metadata?.dimensions?.width ??
+    img.width ??
+    1200
+  const height =
+    img.asset?.metadata?.dimensions?.height ??
+    img.height ??
+    1500
+
+  const source =
+    img.asset?._id
+      ? { _type: 'image', asset: { _ref: img.asset._id } }
+      : img.asset
+
+  const builder = source ? urlFor(source).auto('format').fit('max') : null
+  const builtUrl = builder
+    ? builder.width(Math.min(width, 1600)).height(Math.min(height, 2000)).url()
+    : undefined
+
+  return {
+    url: builtUrl || img.url || img.asset?.url || '',
+    alt: img.alt || img.asset?.altText || fallbackAlt,
+    width,
+    height,
+  }
+}
 
 function mapProduct(doc: SanityProduct): Product {
   return {
@@ -22,12 +52,9 @@ function mapProduct(doc: SanityProduct): Product {
     description: doc.description || '',
     price: doc.price,
     images:
-      doc.images?.map((img) => ({
-        url: img.url,
-        alt: img.alt || doc.name,
-        width: img.width || 800,
-        height: img.height || 1000,
-      })) || [],
+      doc.images
+        ?.map((img) => mapImage(img, doc.name))
+        .filter((img): img is NonNullable<typeof img> => Boolean(img)) || [],
     category: doc.category || '',
     sizes: [],
     colors: [],
