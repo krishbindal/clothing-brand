@@ -11,7 +11,19 @@ export const productFields = groq`
     featured,
     "images": images[]{
       "url": asset->url,
-      "alt": coalesce(alt, asset->altText),
+      "asset": asset->{
+        _id,
+        url,
+        altText,
+        metadata {
+          lqip,
+          dimensions {
+            width,
+            height
+          }
+        }
+      },
+      "alt": coalesce(alt, asset->altText, name),
       "width": asset->metadata.dimensions.width,
       "height": asset->metadata.dimensions.height
     },

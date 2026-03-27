@@ -15,6 +15,7 @@ import ProductCard from '@/components/shop/ProductCard'
 import ImageZoom from '@/components/ui/ImageZoom'
 import { useProducts } from '@/hooks'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
+import EmptyState from '@/components/ui/EmptyState'
 const accordionData = [
   {
     title: 'Details & Materials',
@@ -248,12 +249,6 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   }
 
   useEffect(() => {
-    if (!isLoading && !product) {
-      router.replace('/shop')
-    }
-  }, [isLoading, product, router])
-
-  useEffect(() => {
     return () => {
       if (addFeedbackTimeoutRef.current) {
         clearTimeout(addFeedbackTimeoutRef.current)
@@ -267,15 +262,25 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-brand-black pt-20 text-brand-gray-300 px-4">
-        Product unavailable. {error || 'Please try again.'}
-        <button
-          type="button"
-          onClick={() => void refetch()}
-          className="ml-3 underline text-brand-gold hover:text-brand-gold-light"
-        >
-          Retry
-        </button>
+      <div className="min-h-screen bg-brand-black flex items-center justify-center px-4">
+        <div className="max-w-xl w-full">
+          <EmptyState
+            icon={ShoppingBag}
+            title="Product unavailable"
+            description={error || 'This piece could not be loaded right now. Try again or keep exploring the edit.'}
+            actionLabel="Back to shop"
+            actionHref="/shop"
+          />
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="text-sm text-brand-gold hover:text-brand-gold-light underline underline-offset-4 transition-colors"
+            >
+              Retry loading
+            </button>
+          </div>
+        </div>
       </div>
     )
   }

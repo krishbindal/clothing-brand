@@ -4,7 +4,8 @@ import Footer from '@/components/layout/Footer'
 import ProductGrid from '@/components/shop/ProductGrid'
 import PersonalizedRail from '@/components/home/PersonalizedRail'
 import DynamicSpotlight from '@/components/home/DynamicSpotlight'
-import { getAllProducts } from '@/lib/sanity'
+import EmptyState from '@/components/ui/EmptyState'
+import { getAllProducts, getFeaturedProducts } from '@/lib/sanity'
 
 export const revalidate = 60
 
@@ -14,16 +15,33 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const products = await getAllProducts()
+  const [products, featured] = await Promise.all([getAllProducts(), getFeaturedProducts()])
   const safeProducts = products || []
-  const spotlight = safeProducts.filter((p) => p.featured).slice(0, 8)
+  const featuredProducts = featured?.length ? featured : safeProducts.filter((p) => p.featured)
+  const spotlight = featuredProducts.slice(0, 8)
   const trendingProducts =
     safeProducts.filter((p) => p.tags.includes('bestseller')).slice(0, 4) || []
   const newArrivals =
     safeProducts.filter((p) => p.tags.includes('new')).slice(0, 4) || []
-  const heroCollection = spotlight.length ? spotlight : safeProducts.slice(0, 8)
+  const heroCollection =
+    spotlight.length ? spotlight : safeProducts.slice(0, 8)
   const trendingFallback = trendingProducts.length ? trendingProducts : safeProducts.slice(0, 4)
   const arrivalsFallback = newArrivals.length ? newArrivals : safeProducts.slice(0, 4)
+
+  if (!safeProducts.length) {
+    return (
+      <main className="min-h-screen bg-brand-black flex items-center justify-center px-4">
+        <div className="max-w-3xl w-full">
+          <EmptyState
+            title="No products available yet"
+            description="We’re syncing the catalog from Sanity. Check back soon or explore our collections."
+            actionLabel="Browse collections"
+            actionHref="/collections"
+          />
+        </div>
+      </main>
+    )
+  }
 
   return (
     <>
