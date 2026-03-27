@@ -56,8 +56,14 @@ export default function OrdersPage() {
         </div>
 
         {orders.length === 0 ? (
-          <div className="card-dark p-6 border border-brand-border/60">
-            <p className="text-brand-gray-400 text-sm">No orders yet.</p>
+          <div className="card-dark p-6 border border-brand-border/60 space-y-3">
+            <p className="text-brand-gray-300 text-sm">No orders yet.</p>
+            <p className="text-brand-gray-500 text-sm">
+              Once you checkout, receipts and tracking will live here.
+            </p>
+            <Link href="/shop" className="btn-primary w-fit">
+              Start Shopping
+            </Link>
           </div>
         ) : (
           <div className="space-y-4">

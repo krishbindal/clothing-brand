@@ -11,6 +11,7 @@ import LiveActivityTicker from '@/components/home/LiveActivityTicker'
 import ProductShowcase from '@/components/home/ProductShowcase'
 import SocialProof from '@/components/home/SocialProof'
 import DropIntro from '@/components/DropIntro'
+import ComingSoonPanel from '@/components/home/ComingSoonPanel'
 import {
   getAllProducts,
   getFeaturedProducts,
@@ -73,13 +74,24 @@ export default async function HomePage() {
           ctaLabel={banner?.cta?.label || 'Go to admin'}
           imageUrl={heroImage}
         />
-        <section className="bg-brand-black border-t border-brand-border/30">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-4">
-            <p className="section-overline">Awaiting inventory</p>
-            <h2 className="section-title">No products found</h2>
-            <p className="text-brand-gray-400 max-w-3xl">
-              Connect Sanity credentials and publish products to populate the storefront. This page stays minimal until live data is available.
-            </p>
+        <LiveActivityTicker anchor="Luxury atelier" />
+
+        <section className="bg-brand-black border-t border-brand-border/30 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(201,168,76,0.12),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.05),transparent_40%),radial-gradient(circle_at_50%_60%,rgba(201,168,76,0.08),transparent_40%)] blur-[30px] opacity-90" />
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10 relative">
+            <ComingSoonPanel />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { label: 'Next drop', value: 'Access queue opens soon' },
+                { label: 'Priority', value: 'Early access for waitlist' },
+                { label: 'Experience', value: 'Full site stays premium' },
+              ].map((item) => (
+                <div key={item.label} className="glass rounded-lg border border-brand-border/40 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-brand-gray-500">{item.label}</p>
+                  <p className="text-brand-white font-semibold">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
         <Footer />

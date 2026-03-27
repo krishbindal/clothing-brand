@@ -3,10 +3,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, Plus, Trash2, Star, CheckCircle, Home } from 'lucide-react'
+import { MapPin, Plus, Trash2, Star, CheckCircle, Home, Pencil } from 'lucide-react'
 import { Address } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
-import { getDemoOrders } from '@/lib/demoContent'
+import {
+  createAddress,
+  deleteAddress as deleteAddressRemote,
+  fetchAddresses,
+  setDefaultAddress as setDefaultAddressRemote,
+  updateAddress as updateAddressRemote,
+} from '@/lib/firebase/firestore'
 
 const emptyAddress: Address = {
   firstName: '',
@@ -47,12 +53,14 @@ function AddressesContent({ userId }: { userId: string }) {
   const [addresses, setAddresses] = useState<Address[]>(() => {
     if (typeof window === 'undefined') return []
     const stored = window.localStorage.getItem(storageKey)
-    if (stored) return JSON.parse(stored) as Address[]
-    const fallback = getDemoOrders(userId)[0]?.shippingAddress
-    return fallback ? [{ ...fallback, isDefault: true }] : []
+    return stored ? (JSON.parse(stored) as Address[]) : []
   })
   const [newAddress, setNewAddress] = useState<Address>(emptyAddress)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [loadingAddresses, setLoadingAddresses] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const addressFields: { label: string; field: AddressField }[] = [
     { label: 'First name', field: 'firstName' },
     { label: 'Last name', field: 'lastName' },
@@ -65,28 +73,119 @@ function AddressesContent({ userId }: { userId: string }) {
     { label: 'Phone', field: 'phone' },
   ]
 
+  useEffect(() => {
+    let active = true
+    const loadAddresses = async () => {
+      setLoadingAddresses(true)
+      try {
+        const remote = await fetchAddresses(userId)
+        if (!active) return
+        if (remote.length) {
+          setAddresses(remote)
+          window.localStorage.setItem(storageKey, JSON.stringify(remote))
+        } else {
+          setAddresses((prev) => {
+            window.localStorage.setItem(storageKey, JSON.stringify(prev))
+            return prev
+          })
+        }
+      } catch (err) {
+        console.error('Failed to load addresses', err)
+        setError('Unable to load saved addresses right now.')
+      } finally {
+        if (active) setLoadingAddresses(false)
+      }
+    }
+    void loadAddresses()
+    return () => {
+      active = false
+    }
+  }, [storageKey, userId])
+
   const persist = (next: Address[]) => {
     setAddresses(next)
-    window.localStorage.setItem(storageKey, JSON.stringify(next))
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(next))
+    } catch {
+      // ignore storage errors
+    }
   }
 
-  const handleSave = () => {
-    if (!newAddress.firstName || !newAddress.lastName || !newAddress.line1) return
-    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `addr-${Date.now()}`
-    const next: Address[] = [...addresses, { ...newAddress, id, isDefault: addresses.length === 0 }]
+  const handleSave = async () => {
+    if (!newAddress.firstName || !newAddress.lastName || !newAddress.line1) {
+      setError('Please complete the required fields first.')
+      return
+    }
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      const id =
+        editingId ||
+        (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `addr-${Date.now()}`)
+      const payload: Address = { ...newAddress, id, isDefault: addresses.length === 0 || newAddress.isDefault }
+
+      if (editingId) {
+        await updateAddressRemote(userId, editingId, payload)
+        const next = addresses.map((addr) => (addr.id === editingId ? payload : addr))
+        persist(next)
+        if (payload.isDefault) {
+          await setDefaultAddressRemote(userId, editingId)
+          persist(next.map((addr) => ({ ...addr, isDefault: addr.id === editingId })))
+        }
+      } else {
+        await createAddress(userId, payload)
+        let next = [...addresses, payload]
+        if (payload.isDefault) {
+          await setDefaultAddressRemote(userId, id)
+          next = next.map((addr) => ({ ...addr, isDefault: addr.id === id }))
+        } else if (next.length === 1) {
+          await setDefaultAddressRemote(userId, id)
+          next = [{ ...payload, isDefault: true }]
+        }
+        persist(next)
+      }
+
+      setNewAddress(emptyAddress)
+      setShowForm(false)
+      setEditingId(null)
+    } catch (err) {
+      console.error('Unable to save address', err)
+      setError('Unable to save address right now. Try again in a moment.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (id?: string) => {
+    if (!id) return
+    let next = addresses.filter((addr) => addr.id !== id)
+    const needsDefault = next.length > 0 && !next.some((addr) => addr.isDefault)
+    if (needsDefault) {
+      next = next.map((addr, index) => ({ ...addr, isDefault: index === 0 }))
+    }
     persist(next)
-    setNewAddress(emptyAddress)
-    setShowForm(false)
+    try {
+      await deleteAddressRemote(userId, id)
+      if (needsDefault && next[0]?.id) {
+        await setDefaultAddressRemote(userId, next[0].id as string)
+      }
+    } catch (err) {
+      console.error('Unable to delete address', err)
+      setError('Unable to delete address. Please retry.')
+    }
   }
 
-  const handleDelete = (id?: string) => {
-    const next = addresses.filter((addr) => addr.id !== id)
-    persist(next)
-  }
-
-  const makeDefault = (id?: string) => {
+  const makeDefault = async (id?: string) => {
+    if (!id) return
     const next = addresses.map((addr) => ({ ...addr, isDefault: addr.id === id }))
     persist(next)
+    try {
+      await setDefaultAddressRemote(userId, id)
+    } catch (err) {
+      console.error('Unable to set default address', err)
+      setError('Unable to set default address just now.')
+    }
   }
 
   return (
@@ -98,6 +197,12 @@ function AddressesContent({ userId }: { userId: string }) {
           <p className="text-brand-gray-400">Manage shipping destinations for faster checkout.</p>
         </header>
 
+        {error && (
+          <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error}
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -108,7 +213,7 @@ function AddressesContent({ userId }: { userId: string }) {
             Add address
           </button>
           <span className="text-xs uppercase tracking-[0.25em] text-brand-gray-500">
-            {addresses.length} saved
+            {loadingAddresses ? 'Loading...' : `${addresses.length} saved`}
           </span>
         </div>
 
@@ -138,13 +243,18 @@ function AddressesContent({ userId }: { userId: string }) {
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="btn-primary px-5 py-2 text-[11px] uppercase tracking-[0.25em]"
+                  disabled={isSaving}
+                  className="btn-primary px-5 py-2 text-[11px] uppercase tracking-[0.25em] disabled:opacity-60"
                 >
-                  Save address
+                  {isSaving ? 'Saving…' : editingId ? 'Update address' : 'Save address'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false)
+                    setEditingId(null)
+                    setNewAddress(emptyAddress)
+                  }}
                   className="btn-secondary px-5 py-2 text-[11px] uppercase tracking-[0.25em]"
                 >
                   Cancel
@@ -155,58 +265,77 @@ function AddressesContent({ userId }: { userId: string }) {
         </AnimatePresence>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {addresses.map((address) => (
-            <motion.div
-              key={address.id || `${address.line1}-${address.postalCode}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="card-dark border border-brand-border/60 p-5 space-y-3 relative"
-            >
-              {address.isDefault && (
-                <span className="absolute right-4 top-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] text-brand-gold">
-                  <Star size={12} />
-                  Default
-                </span>
-              )}
-              <div className="flex items-center gap-2 text-brand-gray-400">
-                <MapPin size={16} className="text-brand-gold" />
-                <p className="text-sm text-brand-white font-semibold">
-                  {address.firstName} {address.lastName}
+          {loadingAddresses && (
+            <div className="md:col-span-2 rounded-lg border border-brand-border/60 bg-brand-card/50 p-6 text-brand-gray-400 text-sm">
+              Syncing your saved addresses...
+            </div>
+          )}
+
+          {!loadingAddresses &&
+            addresses.map((address) => (
+              <motion.div
+                key={address.id || `${address.line1}-${address.postalCode}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="card-dark border border-brand-border/60 p-5 space-y-3 relative"
+              >
+                {address.isDefault && (
+                  <span className="absolute right-4 top-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.25em] text-brand-gold">
+                    <Star size={12} />
+                    Default
+                  </span>
+                )}
+                <div className="flex items-center gap-2 text-brand-gray-400">
+                  <MapPin size={16} className="text-brand-gold" />
+                  <p className="text-sm text-brand-white font-semibold">
+                    {address.firstName} {address.lastName}
+                  </p>
+                </div>
+                <p className="text-sm text-brand-gray-300">
+                  {address.line1}
+                  {address.line2 ? `, ${address.line2}` : ''}
                 </p>
-              </div>
-              <p className="text-sm text-brand-gray-300">
-                {address.line1}
-                {address.line2 ? `, ${address.line2}` : ''}
-              </p>
-              <p className="text-sm text-brand-gray-400">
-                {address.city}, {address.state} {address.postalCode}
-              </p>
-              <p className="text-sm text-brand-gray-500">{address.country}</p>
-              {address.phone && <p className="text-sm text-brand-gray-500">Phone: {address.phone}</p>}
+                <p className="text-sm text-brand-gray-400">
+                  {address.city}, {address.state} {address.postalCode}
+                </p>
+                <p className="text-sm text-brand-gray-500">{address.country}</p>
+                {address.phone && <p className="text-sm text-brand-gray-500">Phone: {address.phone}</p>}
 
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => makeDefault(address.id)}
-                  className="text-xs uppercase tracking-[0.25em] text-brand-gold inline-flex items-center gap-1"
-                >
-                  <Home size={14} />
-                  Make default
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(address.id)}
-                  className="text-xs uppercase tracking-[0.25em] text-brand-gray-500 inline-flex items-center gap-1 hover:text-red-300 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewAddress(address)
+                      setShowForm(true)
+                      setEditingId(address.id || null)
+                    }}
+                    className="text-xs uppercase tracking-[0.25em] text-brand-gray-400 inline-flex items-center gap-1 hover:text-brand-gold transition-colors"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => makeDefault(address.id)}
+                    className="text-xs uppercase tracking-[0.25em] text-brand-gold inline-flex items-center gap-1"
+                  >
+                    <Home size={14} />
+                    Make default
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(address.id)}
+                    className="text-xs uppercase tracking-[0.25em] text-brand-gray-500 inline-flex items-center gap-1 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            ))}
 
-          {addresses.length === 0 && (
+          {!loadingAddresses && addresses.length === 0 && (
             <div className="md:col-span-2 rounded-lg border border-dashed border-brand-border/60 bg-brand-card/40 p-6 text-brand-gray-400 text-sm flex items-center gap-2">
               <CheckCircle size={16} className="text-brand-gold" />
               No addresses yet — add one to speed up checkout.

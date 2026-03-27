@@ -90,6 +90,7 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
   }, [])
 
   const dropProducts = useMemo(() => (products || []).slice(0, DROP_LIMIT), [products])
+  const hasAnyProducts = dropProducts.length > 0
   const decoratedProducts = useMemo(() => {
     return dropProducts.map((product, index) => {
       const ageDays = getDaysSince(product.createdAt)
@@ -264,6 +265,24 @@ export default function DropIntro({ products, banner, collectionName }: DropIntr
       : countdown !== null
       ? `00:0${Math.max(0, countdown)}`
       : null
+
+  if (!hasAnyProducts) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-brand-border/50 bg-brand-card/60 px-6 py-10 shadow-[0_20px_120px_rgba(0,0,0,0.35)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(201,168,76,0.12),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.06),transparent_35%)] blur-[60px]" />
+        <div className="absolute inset-0 bg-noise opacity-20" />
+        <div className="relative space-y-3">
+          <p className="text-[11px] uppercase tracking-[0.35em] text-brand-gold">Drop intro</p>
+          <h3 className="text-2xl sm:text-3xl font-display font-semibold text-brand-white">
+            Hero glow warming up
+          </h3>
+          <p className="text-brand-gray-300 max-w-2xl">
+            The cinematic drop intro will ignite automatically once products publish. For now, enjoy the ambient glow while we prep the atelier.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

@@ -27,6 +27,18 @@
     overflow-x: hidden;
   }
 
+  body.luxe-cursor {
+    cursor: none;
+  }
+
+  body.luxe-cursor input,
+  body.luxe-cursor textarea,
+  body.luxe-cursor button,
+  body.luxe-cursor a,
+  body.luxe-cursor select {
+    cursor: auto;
+  }
+
   ::selection {
     background-color: rgba(201, 168, 76, 0.3);
     color: #F5F5F5;

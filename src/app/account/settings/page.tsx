@@ -1,16 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Shield, Smartphone, User, Mail, Lock, CheckCircle } from 'lucide-react'
+import { Camera, CheckCircle, Image as ImageIcon, Mail, Shield, Smartphone, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { fetchProfile, saveProfile } from '@/lib/firebase/firestore'
+import { getFirebaseApp } from '@/lib/firebase/client'
+import { getAuth, updateEmail, updateProfile } from 'firebase/auth'
 
 type ProfileForm = {
   name: string
   email: string
   phone: string
-  password: string
+  photoURL?: string
 }
 
 export default function AccountSettingsPage() {
@@ -35,25 +39,80 @@ export default function AccountSettingsPage() {
 }
 
 function SettingsContent({ userName, userEmail, userId }: { userName: string; userEmail: string; userId: string }) {
-  const [profile, setProfile] = useState<ProfileForm>(() => {
-    if (typeof window === 'undefined') return { name: userName, email: userEmail, phone: '', password: '' }
-    const stored = window.localStorage.getItem(`luxe_profile_${userId}`)
-    if (stored) return JSON.parse(stored) as ProfileForm
-    return { name: userName, email: userEmail, phone: '', password: '' }
+  const [profile, setProfile] = useState<ProfileForm>({
+    name: userName,
+    email: userEmail,
+    phone: '',
+    photoURL: '',
   })
-  const [status, setStatus] = useState<'idle' | 'saved'>('idle')
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [message, setMessage] = useState<string | null>(null)
+  const [loadingProfile, setLoadingProfile] = useState(true)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(`luxe_profile_${userId}`)
+      if (stored) {
+        setProfile((prev) => ({ ...prev, ...(JSON.parse(stored) as ProfileForm) }))
+      }
+    }
+
+    void (async () => {
+      try {
+        const remote = await fetchProfile(userId)
+        if (remote) {
+          setProfile((prev) => ({ ...prev, ...remote }))
+        }
+      } catch (err) {
+        console.error('Profile fetch failed', err)
+        setMessage('Unable to fetch saved profile right now.')
+      } finally {
+        setLoadingProfile(false)
+      }
+    })()
+  }, [userEmail, userId, userName])
 
   const handleChange = (field: keyof ProfileForm, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setStatus('saving')
+    setMessage(null)
     try {
-      window.localStorage.setItem(`luxe_profile_${userId}`, JSON.stringify(profile))
+      await saveProfile(userId, profile)
+      try {
+        window.localStorage.setItem(`luxe_profile_${userId}`, JSON.stringify(profile))
+      } catch {
+        // ignore storage issues
+      }
+
+      try {
+        const auth = getAuth(getFirebaseApp())
+        if (auth?.currentUser) {
+          await updateProfile(auth.currentUser, {
+            displayName: profile.name,
+            photoURL: profile.photoURL || undefined,
+          })
+          if (profile.email && profile.email !== auth.currentUser.email) {
+            try {
+              await updateEmail(auth.currentUser, profile.email)
+            } catch (err) {
+              console.warn('Email update requires reauth', err)
+              setMessage('Email saved for preferences. Reauthenticate to update your login email.')
+            }
+          }
+        }
+      } catch (authError) {
+        console.warn('Auth sync skipped', authError)
+      }
+
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2600)
-    } catch {
-      setStatus('idle')
+    } catch (err) {
+      console.error('Profile save failed', err)
+      setStatus('error')
+      setMessage('Unable to save settings right now.')
     }
   }
 
@@ -64,7 +123,7 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
           <p className="section-overline">Account</p>
           <h1 className="section-title">Settings & Security</h1>
           <p className="text-brand-gray-400 max-w-2xl">
-            Update your profile, tighten security, and keep your contact details current. Changes persist locally for this demo experience.
+            Update your profile, tighten security, and keep your contact details current. We sync details to your account when available and fall back to your device when offline.
           </p>
         </header>
 
@@ -90,7 +149,8 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
               <input
                 value={profile.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors"
+                disabled={status === 'saving' || loadingProfile}
+                className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors disabled:opacity-60"
                 placeholder="Your name"
               />
             </label>
@@ -103,7 +163,8 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
                   type="email"
                   value={profile.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors"
+                  disabled={status === 'saving' || loadingProfile}
+                  className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors disabled:opacity-60"
                   placeholder="name@email.com"
                 />
               </div>
@@ -117,7 +178,8 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
                   type="tel"
                   value={profile.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
-                  className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors"
+                  disabled={status === 'saving' || loadingProfile}
+                  className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors disabled:opacity-60"
                   placeholder="+1 555 0100"
                 />
               </div>
@@ -132,34 +194,52 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-brand-gold/15 border border-brand-gold/30 flex items-center justify-center">
-                <Shield size={18} className="text-brand-gold" />
+                <Camera size={18} className="text-brand-gold" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-brand-gray-500">Security</p>
-                <p className="text-brand-white font-semibold">Credentials</p>
+                <p className="text-xs uppercase tracking-[0.25em] text-brand-gray-500">Identity</p>
+                <p className="text-brand-white font-semibold">Profile portrait</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-full border border-brand-border/60 bg-brand-card/60 flex items-center justify-center overflow-hidden">
+                {profile.photoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="text-xl font-semibold text-brand-gold">
+                    {(profile.name || 'LUXE').charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-brand-gray-400">
+                <p>Refresh your avatar to match your vibe.</p>
+                <Link href="/account/security" className="hover-line text-brand-gold text-xs uppercase tracking-[0.25em]">
+                  Manage security →
+                </Link>
               </div>
             </div>
 
             <label className="space-y-1 text-sm text-brand-gray-400">
-              Password
+              Profile photo URL
               <div className="flex items-center gap-2">
-                <Lock size={16} className="text-brand-gray-500" />
+                <ImageIcon size={16} className="text-brand-gray-500" />
                 <input
-                  type="password"
-                  value={profile.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
+                  value={profile.photoURL ?? ''}
+                  onChange={(e) => handleChange('photoURL', e.target.value)}
                   className="w-full rounded-lg border border-brand-border/60 bg-brand-card/60 px-3 py-2 text-brand-white focus:border-brand-gold outline-none transition-colors"
-                  placeholder="••••••••"
+                  placeholder="https://..."
                 />
               </div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-brand-gray-600">
-                Save a strong passphrase. Demo mode stores locally only.
+                Paste an image URL. Secure updates live on your account.
               </p>
             </label>
 
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-brand-gray-500">
-              <CheckCircle size={14} className="text-green-400" />
-              Multi-factor prompts available at checkout.
+              <Shield size={14} className="text-brand-gold" />
+              Password & MFA live under Security.
             </div>
           </motion.div>
         </div>
@@ -168,14 +248,20 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
           <button
             type="button"
             onClick={handleSave}
-            className="btn-primary px-6 py-3 text-sm uppercase tracking-[0.3em]"
+            disabled={status === 'saving'}
+            className="btn-primary px-6 py-3 text-sm uppercase tracking-[0.3em] disabled:opacity-60"
           >
-            Save settings
+            {status === 'saving' ? 'Saving…' : 'Save settings'}
           </button>
           {status === 'saved' && (
             <span className="inline-flex items-center gap-2 text-sm text-brand-gold">
               <CheckCircle size={16} className="text-brand-gold" />
-              Saved locally
+              Saved
+            </span>
+          )}
+          {message && (
+            <span className={`text-sm ${status === 'error' ? 'text-red-300' : 'text-brand-gray-300'}`}>
+              {message}
             </span>
           )}
         </div>

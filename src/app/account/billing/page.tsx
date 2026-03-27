@@ -7,7 +7,6 @@ import { CreditCard, Receipt, ShieldCheck, ArrowRight } from 'lucide-react'
 import { Order } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate, formatPrice } from '@/lib/utils'
-import { getDemoOrders } from '@/lib/demoContent'
 
 export default function BillingPage() {
   const router = useRouter()
@@ -22,21 +21,18 @@ export default function BillingPage() {
       return
     }
 
-    const load = async () => {
+    void (async () => {
       try {
         const res = await fetch(`/api/orders?userId=${user.uid}&limit=5`)
         const data = (await res.json()) as { orders?: Order[] }
-        const fallback = getDemoOrders(user.uid)
-        setPayments(data.orders && data.orders.length ? data.orders : fallback)
+        setPayments(data.orders || [])
       } catch (error) {
         console.error('Failed to load billing', error)
-        setPayments(getDemoOrders(user.uid))
+        setPayments([])
       } finally {
         setIsLoading(false)
       }
-    }
-
-    void load()
+    })()
   }, [loading, router, user])
 
   const totals = useMemo(() => {
@@ -57,7 +53,7 @@ export default function BillingPage() {
           <p className="section-overline">Account</p>
           <h1 className="section-title">Billing & Payments</h1>
           <p className="text-brand-gray-400">
-            Track past charges, confirmation IDs, and payment status. Demo data mirrors your orders.
+            Track past charges, confirmation IDs, and payment status. Receipts will appear as soon as you place your first order.
           </p>
         </header>
 
