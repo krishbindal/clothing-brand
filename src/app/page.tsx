@@ -11,7 +11,15 @@ import LiveActivityTicker from '@/components/home/LiveActivityTicker'
 import ProductShowcase from '@/components/home/ProductShowcase'
 import SocialProof from '@/components/home/SocialProof'
 import DropIntro from '@/components/DropIntro'
-import { getAllProducts, getFeaturedProducts, getBanner, getCategories, getNewArrivals, urlFor } from '@/lib/sanity'
+import {
+  getAllProducts,
+  getFeaturedProducts,
+  getBanner,
+  getCategories,
+  getNewArrivals,
+  getLatestDropProducts,
+  urlFor,
+} from '@/lib/sanity'
 
 export const revalidate = 60
 
@@ -21,17 +29,21 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const [products, featured, banner, categories, newArrivals] = await Promise.all([
+  const [products, featured, banner, categories, newArrivals, latestDrops] = await Promise.all([
     getAllProducts(),
     getFeaturedProducts(),
     getBanner(),
     getCategories(),
     getNewArrivals(),
+    getLatestDropProducts(),
   ])
 
   const safeProducts = products || []
   const safeFeatured = featured || []
   const safeArrivals = (newArrivals && newArrivals.length > 0 ? newArrivals : safeProducts).slice(0, 8)
+  const dropProducts = (latestDrops && latestDrops.length > 0 ? latestDrops : safeArrivals).slice(0, 6)
+  const featuredCollection =
+    banner?.title || dropProducts[0]?.collection || dropProducts[0]?.category || 'Limited Drop'
   const spotlight = (safeFeatured.length ? safeFeatured : safeProducts).slice(0, 8)
   const trendingFallback = (safeFeatured.length ? safeFeatured : safeProducts).slice(0, 4)
   const arrivalsFallback = safeArrivals.slice(0, 4)
@@ -46,7 +58,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <DropIntro />
+      <DropIntro products={dropProducts} banner={banner} collectionName={featuredCollection} />
       <AnnouncementBar />
       <LiveActivityTicker anchor="Global atelier" products={safeProducts.length ? safeProducts : spotlight} />
 

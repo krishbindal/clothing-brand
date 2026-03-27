@@ -48,6 +48,23 @@ export const getNewArrivalsQuery = groq`
   }
 `
 
+export const getLatestDropProductsQuery = groq`
+  *[_type == "product"] | order(createdAt desc)[0...6] {
+    _id,
+    title,
+    "slug": slug.current,
+    price,
+    description,
+    images,
+    "category": category->name,
+    "categorySlug": category->slug.current,
+    stock,
+    isFeatured,
+    tags,
+    createdAt
+  }
+`
+
 export const getCategoriesQuery = groq`
   *[_type == "category"] | order(name asc) {
     _id,
@@ -61,8 +78,9 @@ export const getBannerQuery = groq`
     _id,
     title,
     subtitle,
-    image,
     eyebrow,
+    featured,
+    image,
     cta
   }
 `

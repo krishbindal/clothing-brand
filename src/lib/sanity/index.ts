@@ -9,6 +9,7 @@ import {
   getProductsByCategorySlugQuery,
   searchProductsQuery,
   getNewArrivalsQuery,
+  getLatestDropProductsQuery,
 } from './queries'
 import type { Category, Product, ProductImage } from '@/types'
 import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
@@ -148,6 +149,20 @@ export async function getNewArrivals(): Promise<Product[]> {
     .slice()
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 8)
+}
+
+export async function getLatestDropProducts(): Promise<Product[]> {
+  const products = await fetchSanityData<SanityProduct[]>(
+    'getLatestDropProducts',
+    getLatestDropProductsQuery,
+    { revalidate: 60, tags: ['products', 'new-drop'], fallback: [] }
+  )
+  const mapped = products.map(mapProduct)
+  if (mapped.length) return mapped.slice(0, 6)
+  return demoProducts
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6)
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
