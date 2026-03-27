@@ -14,7 +14,15 @@ type ProfileForm = {
   name: string
   email: string
   phone: string
-  photoURL?: string
+  photoURL?: string | null
+}
+
+function normalizeProfile(data: Partial<ProfileForm> | null | undefined): Partial<ProfileForm> {
+  if (!data) return {}
+  return {
+    ...data,
+    photoURL: data.photoURL ?? undefined,
+  }
 }
 
 export default function AccountSettingsPage() {
@@ -43,7 +51,7 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
     name: userName,
     email: userEmail,
     phone: '',
-    photoURL: '',
+    photoURL: undefined,
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
@@ -53,7 +61,7 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
     if (typeof window !== 'undefined') {
       const stored = window.localStorage.getItem(`luxe_profile_${userId}`)
       if (stored) {
-        setProfile((prev) => ({ ...prev, ...(JSON.parse(stored) as ProfileForm) }))
+        setProfile((prev) => ({ ...prev, ...normalizeProfile(JSON.parse(stored) as ProfileForm) }))
       }
     }
 
@@ -61,7 +69,7 @@ function SettingsContent({ userName, userEmail, userId }: { userName: string; us
       try {
         const remote = await fetchProfile(userId)
         if (remote) {
-          setProfile((prev) => ({ ...prev, ...remote }))
+          setProfile((prev) => ({ ...prev, ...normalizeProfile(remote) }))
         }
       } catch (err) {
         console.error('Profile fetch failed', err)
