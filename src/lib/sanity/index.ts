@@ -12,6 +12,7 @@ import {
 } from './queries'
 import type { Category, Product, ProductImage } from '@/types'
 import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
+import { demoBanner, demoCategories, demoProducts } from '../demoContent'
 
 export { isSanityConfigured, urlFor, apiVersion, sanityClient }
 
@@ -113,7 +114,8 @@ export async function getAllProducts(): Promise<Product[]> {
     getAllProductsQuery,
     { revalidate: 60, tags: ['products'], fallback: [] }
   )
-  return products.map(mapProduct)
+  const mapped = products.map(mapProduct)
+  return mapped.length ? mapped : demoProducts
 }
 
 export async function getNewArrivals(): Promise<Product[]> {
@@ -122,7 +124,12 @@ export async function getNewArrivals(): Promise<Product[]> {
     getNewArrivalsQuery,
     { revalidate: 60, tags: ['products', 'new'], fallback: [] }
   )
-  return products.map(mapProduct)
+  const mapped = products.map(mapProduct)
+  if (mapped.length) return mapped
+  return demoProducts
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 8)
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -131,7 +138,12 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     getFeaturedProductsQuery,
     { revalidate: 60, tags: ['products', 'featured'], fallback: [] }
   )
-  return products.map(mapProduct)
+  const mapped = products.map(mapProduct)
+  if (mapped.length) return mapped
+  const fallbackFeatured = demoProducts.filter(
+    (product) => product.featured || product.tags.includes('trending')
+  )
+  return fallbackFeatured.length ? fallbackFeatured : demoProducts
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -140,7 +152,8 @@ export async function getCategories(): Promise<Category[]> {
     getCategoriesQuery,
     { revalidate: 60, tags: ['categories'], fallback: [] }
   )
-  return categories.map(mapCategory)
+  const mapped = categories.map(mapCategory)
+  return mapped.length ? mapped : demoCategories
 }
 
 export async function getBanner(): Promise<SanityBanner | null> {
@@ -149,7 +162,7 @@ export async function getBanner(): Promise<SanityBanner | null> {
     getBannerQuery,
     { revalidate: 60, tags: ['banner'], fallback: null }
   )
-  return banner
+  return banner || demoBanner
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -158,7 +171,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     getProductBySlugQuery,
     { params: { slug }, revalidate: 60, tags: [`product:${slug}`], fallback: null }
   )
-  return product ? mapProduct(product) : null
+  if (product) return mapProduct(product)
+  return demoProducts.find((item) => item.slug === slug) || null
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -167,7 +181,8 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     getCategoryBySlugQuery,
     { params: { slug }, revalidate: 60, tags: [`category:${slug}`], fallback: null }
   )
-  return category ? mapCategory(category) : null
+  if (category) return mapCategory(category)
+  return demoCategories.find((item) => item.slug === slug) || null
 }
 
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
@@ -176,7 +191,19 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
     getProductsByCategorySlugQuery,
     { params: { categorySlug }, revalidate: 60, tags: ['products', `category:${categorySlug}`], fallback: [] }
   )
-  return products.map(mapProduct)
+  const mapped = products.map(mapProduct)
+  if (mapped.length) return mapped
+
+  const fallbackCategory = demoCategories.find(
+    (category) =>
+      category.slug === categorySlug || category.name.toLowerCase() === categorySlug.toLowerCase()
+  )
+  const normalized = fallbackCategory?.name.toLowerCase()
+  return demoProducts.filter(
+    (product) =>
+      product.category.toLowerCase() === normalized ||
+      product.category.toLowerCase().replace(/\s+/g, '-') === categorySlug
+  )
 }
 
 export async function searchProducts(searchQuery: string): Promise<Product[]> {
@@ -186,7 +213,15 @@ export async function searchProducts(searchQuery: string): Promise<Product[]> {
     searchProductsQuery,
     { params: { searchQuery }, revalidate: 0, fallback: [] }
   )
-  return products.map(mapProduct)
+  const mapped = products.map(mapProduct)
+  if (mapped.length) return mapped
+  const query = searchQuery.toLowerCase()
+  return demoProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(query) ||
+      product.description.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query)
+  )
 }
 
 export async function getCollections() {

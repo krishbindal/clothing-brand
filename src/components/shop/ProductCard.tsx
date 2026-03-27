@@ -18,6 +18,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
   const price = Number.isFinite(product.price) ? product.price : 0
   const [quickViewOpen, setQuickViewOpen] = useState(false)
   const lowStock = product.inStock && product.stockCount !== undefined && product.stockCount <= 3
+  const isNew = product.tags?.includes('new')
 
   return (
     <div className="group relative">
@@ -44,11 +45,19 @@ export default function ProductCard({ product, priority = false }: { product: Pr
 
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-          {lowStock && (
-            <span className="absolute top-4 left-4 z-10 bg-amber-500/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em]">
-              Low stock
-            </span>
-          )}
+          <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+            {isNew && (
+              <span className="inline-flex items-center gap-1 bg-brand-gold/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em] shadow-gold-subtle">
+                <Sparkles size={12} />
+                New
+              </span>
+            )}
+            {lowStock && (
+              <span className="inline-flex items-center gap-1 bg-amber-500/90 text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.2em]">
+                Low stock
+              </span>
+            )}
+          </div>
 
           {product.tags?.includes('trending') && (
             <span className="absolute top-4 right-4 z-10 bg-brand-gold text-brand-black text-[10px] font-semibold px-3 py-1 rounded-sm uppercase tracking-[0.25em] shadow-gold-subtle">

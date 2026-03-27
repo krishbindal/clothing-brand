@@ -10,6 +10,7 @@ import { useProducts } from '@/hooks'
 import { Order } from '@/types'
 import { formatDate, formatPrice } from '@/lib/utils'
 import ProductCard from '@/components/shop/ProductCard'
+import { getDemoOrders } from '@/lib/demoContent'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -29,9 +30,11 @@ export default function AccountPage() {
       try {
         const res = await fetch(`/api/orders?userId=${user.uid}&limit=3`)
         const data = (await res.json()) as { orders?: Order[] }
-        setOrders(data.orders || [])
+        const fallback = getDemoOrders(user.uid)
+        setOrders(data.orders && data.orders.length ? data.orders : fallback)
       } catch (error) {
         console.error('Failed to load orders', error)
+        setOrders(getDemoOrders(user.uid))
       } finally {
         setIsLoading(false)
       }
@@ -167,7 +170,8 @@ export default function AccountPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="section-overline">For You</p>
-              <h2 className="section-title">Handpicked edits</h2>
+              <h2 className="section-title">Wishlist warm-up</h2>
+              <p className="text-brand-gray-400 text-sm mt-1">Save a piece to lock it in. Until then, we keep this curated for you.</p>
             </div>
             <Link href="/shop" className="text-sm text-brand-gray-400 hover:text-brand-gold transition-colors hover-line">
               Continue shopping →
@@ -177,18 +181,24 @@ export default function AccountPage() {
             {featuredProducts.length > 0 ? (
               featuredProducts.map((product) => <ProductCard key={product.id} product={product} />)
             ) : (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-lg border border-brand-border/40 bg-brand-card/70 overflow-hidden"
-                >
-                  <div className="aspect-[4/5] bg-brand-dark/60 animate-pulse" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-3 w-1/2 bg-brand-border/40 rounded animate-pulse" />
-                    <div className="h-3 w-3/4 bg-brand-border/30 rounded animate-pulse" />
-                  </div>
+              <>
+                <div className="sm:col-span-2 lg:col-span-4 rounded-lg border border-brand-border/50 bg-brand-card/60 px-5 py-4 text-brand-gray-300 text-sm flex flex-wrap items-center gap-2">
+                  <span className="px-2 py-1 rounded-full bg-brand-gold/10 text-brand-gold text-[11px] uppercase tracking-[0.25em]">Wishlist</span>
+                  Your saved heat will appear here. Meanwhile, we curated a few pieces to explore.
                 </div>
-              ))
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-brand-border/40 bg-brand-card/70 overflow-hidden"
+                  >
+                    <div className="aspect-[4/5] bg-brand-dark/60 animate-pulse" />
+                    <div className="p-5 space-y-3">
+                      <div className="h-3 w-1/2 bg-brand-border/40 rounded animate-pulse" />
+                      <div className="h-3 w-3/4 bg-brand-border/30 rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </section>

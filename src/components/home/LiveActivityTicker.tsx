@@ -3,20 +3,41 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Activity, Flame, Sparkles } from 'lucide-react'
+import { liveCities } from '@/lib/demoContent'
+import { Product } from '@/types'
 
 interface LiveActivityTickerProps {
   anchor?: string
+  products?: Product[]
 }
 
-export default function LiveActivityTicker({ anchor = 'Worldwide' }: LiveActivityTickerProps) {
+export default function LiveActivityTicker({ anchor = 'Worldwide', products = [] }: LiveActivityTickerProps) {
   const [index, setIndex] = useState(0)
+  const [livePurchase, setLivePurchase] = useState('Someone from Delhi just bought a new drop')
+  const productNames = useMemo(() => {
+    if (products.length) return products.map((product) => product.name)
+    return ['Aether Bomber', 'Seraph Overshirt', 'Obsidian Coat', 'Ion Knit Set']
+  }, [products])
+
+  useEffect(() => {
+    const updatePurchase = () => {
+      const city = liveCities[Math.floor(Math.random() * liveCities.length)]
+      const item = productNames[Math.floor(Math.random() * productNames.length)]
+      setLivePurchase(`Someone from ${city} just bought ${item}`)
+    }
+
+    updatePurchase()
+    const interval = setInterval(updatePurchase, 7200)
+    return () => clearInterval(interval)
+  }, [productNames])
+
   const events = useMemo(
     () => [
       { icon: <Flame size={14} />, message: '🔥 12 people viewing this piece now', meta: 'Live heat', tone: 'text-amber-200' },
       { icon: <Activity size={14} />, message: '5 sold in the last hour — limited sizing', meta: anchor, tone: 'text-green-200' },
-      { icon: <Sparkles size={14} />, message: 'New drop moving fast — sizes are going', meta: 'New', tone: 'text-brand-gold' },
+      { icon: <Sparkles size={14} />, message: livePurchase, meta: 'Drop radar', tone: 'text-brand-gold' },
     ],
-    [anchor],
+    [anchor, livePurchase],
   )
 
   useEffect(() => {

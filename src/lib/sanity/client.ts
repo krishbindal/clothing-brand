@@ -10,6 +10,7 @@ export const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2024-03
 const hasEnvConfig = Boolean(envProjectId && envDataset)
 export const isSanityConfigured = Boolean(projectId && dataset)
 let hasWarnedMissingEnv = false
+const loggedOperations = new Set<string>()
 
 const config: ClientConfig = {
   projectId,
@@ -39,9 +40,12 @@ export async function fetchSanityData<T>(
 ): Promise<T> {
   if (!isSanityConfigured) return fallback
 
-  if (!hasEnvConfig && !hasWarnedMissingEnv) {
-    console.warn('Sanity env vars missing; using default project configuration.')
-    hasWarnedMissingEnv = true
+  if (!hasEnvConfig) {
+    if (!hasWarnedMissingEnv) {
+      console.warn('Sanity env vars missing; serving luxe demo content.')
+      hasWarnedMissingEnv = true
+    }
+    return fallback
   }
 
   try {
@@ -53,7 +57,10 @@ export async function fetchSanityData<T>(
     })
   } catch (error) {
     const details = error instanceof Error ? error.message : String(error)
-    console.error(`Sanity fetch failed (${operationName}): ${details}`)
+    if (!loggedOperations.has(operationName)) {
+      loggedOperations.add(operationName)
+      console.error(`Sanity fetch failed (${operationName}): ${details}`)
+    }
     return fallback
   }
 }

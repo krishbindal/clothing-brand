@@ -9,10 +9,10 @@ interface CategoryCarouselProps {
 }
 
 const placeholders: Category[] = [
-  { id: 'edit', name: 'Editorial', slug: 'editorial' },
-  { id: 'atelier', name: 'Atelier', slug: 'atelier' },
-  { id: 'runway', name: 'Runway Ready', slug: 'runway' },
+  { id: 'streetwear', name: 'Streetwear', slug: 'streetwear' },
   { id: 'essentials', name: 'Essentials', slug: 'essentials' },
+  { id: 'luxury', name: 'Luxury', slug: 'luxury' },
+  { id: 'new-drops', name: 'New Drops', slug: 'new-drops' },
 ]
 
 export default function CategoryCarousel({ categories }: CategoryCarouselProps) {
