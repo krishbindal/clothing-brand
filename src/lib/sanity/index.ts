@@ -13,7 +13,6 @@ import {
 } from './queries'
 import type { Category, Product, ProductImage } from '@/types'
 import type { SanityBanner, SanityCategory, SanityImageAsset, SanityProduct } from './types'
-import { demoBanner, demoCategories, demoProducts } from '../demoContent'
 
 export { isSanityConfigured, urlFor, apiVersion, sanityClient }
 
@@ -144,65 +143,53 @@ function mapCategory(doc: SanityCategory): Category {
 }
 
 export async function getAllProducts(): Promise<Product[]> {
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'getAllProducts',
     getAllProductsQuery,
     { revalidate: 60, tags: ['products'], fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  return mapped.length ? mapped : demoProducts
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped
 }
 
 export async function getNewArrivals(): Promise<Product[]> {
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'getNewArrivals',
     getNewArrivalsQuery,
     { revalidate: 60, tags: ['products', 'new'], fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  if (mapped.length) return mapped
-  return demoProducts
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 8)
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped.slice(0, 8)
 }
 
 export async function getLatestDropProducts(): Promise<Product[]> {
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'getLatestDropProducts',
     getLatestDropProductsQuery,
     { revalidate: 60, tags: ['products', 'new-drop'], fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  if (mapped.length) return mapped.slice(0, 6)
-  return demoProducts
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 6)
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped.slice(0, 6)
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'getFeaturedProducts',
     getFeaturedProductsQuery,
     { revalidate: 60, tags: ['products', 'featured'], fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  if (mapped.length) return mapped
-  const fallbackFeatured = demoProducts.filter(
-    (product) => product.featured || product.tags.includes('trending')
-  )
-  return fallbackFeatured.length ? fallbackFeatured : demoProducts
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const categories = await fetchSanityData<SanityCategory[]>(
+  const categories = await fetchSanityData<SanityCategory[] | null>(
     'getCategories',
     getCategoriesQuery,
     { revalidate: 60, tags: ['categories'], fallback: [] }
   )
-  const mapped = categories.map(mapCategory)
-  return mapped.length ? mapped : demoCategories
+  const mapped = (categories ?? []).map(mapCategory)
+  return mapped
 }
 
 export async function getBanner(): Promise<SanityBanner | null> {
@@ -211,7 +198,7 @@ export async function getBanner(): Promise<SanityBanner | null> {
     getBannerQuery,
     { revalidate: 60, tags: ['banner'], fallback: null }
   )
-  return banner || demoBanner
+  return banner || null
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -221,7 +208,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     { params: { slug }, revalidate: 60, tags: [`product:${slug}`], fallback: null }
   )
   if (product) return mapProduct(product)
-  return demoProducts.find((item) => item.slug === slug) || null
+  return null
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -231,46 +218,28 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     { params: { slug }, revalidate: 60, tags: [`category:${slug}`], fallback: null }
   )
   if (category) return mapCategory(category)
-  return demoCategories.find((item) => item.slug === slug) || null
+  return null
 }
 
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'getProductsByCategory',
     getProductsByCategorySlugQuery,
     { params: { categorySlug }, revalidate: 60, tags: ['products', `category:${categorySlug}`], fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  if (mapped.length) return mapped
-
-  const fallbackCategory = demoCategories.find(
-    (category) =>
-      category.slug === categorySlug || category.name.toLowerCase() === categorySlug.toLowerCase()
-  )
-  const normalized = fallbackCategory?.name.toLowerCase()
-  return demoProducts.filter(
-    (product) =>
-      product.category.toLowerCase() === normalized ||
-      product.category.toLowerCase().replace(/\s+/g, '-') === categorySlug
-  )
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped
 }
 
 export async function searchProducts(searchQuery: string): Promise<Product[]> {
   if (!searchQuery.trim()) return []
-  const products = await fetchSanityData<SanityProduct[]>(
+  const products = await fetchSanityData<SanityProduct[] | null>(
     'searchProducts',
     searchProductsQuery,
     { params: { searchQuery }, revalidate: 0, fallback: [] }
   )
-  const mapped = products.map(mapProduct)
-  if (mapped.length) return mapped
-  const query = searchQuery.toLowerCase()
-  return demoProducts.filter(
-    (product) =>
-      product.name.toLowerCase().includes(query) ||
-      product.description.toLowerCase().includes(query) ||
-      product.category.toLowerCase().includes(query)
-  )
+  const mapped = (products ?? []).map(mapProduct)
+  return mapped
 }
 
 export async function getCollections() {

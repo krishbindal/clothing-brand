@@ -54,7 +54,39 @@ export default async function HomePage() {
       : banner?.image
       ? urlFor(banner.image).width(2000).height(1200).url()
       : undefined
-  const hasCatalog = safeProducts.length > 0 || safeFeatured.length > 0 || safeArrivals.length > 0
+  const hasCatalog = Boolean(
+    safeProducts.length || safeFeatured.length || safeArrivals.length || dropProducts.length,
+  )
+
+  if (!hasCatalog) {
+    return (
+      <>
+        <AnnouncementBar />
+        <HeroSection
+          title={banner?.title || 'LUXE — Wear the Future'}
+          subtitle={
+            banner?.subtitle ||
+            'Add products in Sanity Studio to light up the catalog. Once published, drops, spotlights, and rails will render automatically.'
+          }
+          eyebrow={banner?.eyebrow || 'Catalog warming up'}
+          ctaHref={banner?.cta?.href || '/admin'}
+          ctaLabel={banner?.cta?.label || 'Go to admin'}
+          imageUrl={heroImage}
+        />
+        <section className="bg-brand-black border-t border-brand-border/30">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-4">
+            <p className="section-overline">Awaiting inventory</p>
+            <h2 className="section-title">No products found</h2>
+            <p className="text-brand-gray-400 max-w-3xl">
+              Connect Sanity credentials and publish products to populate the storefront. This page stays minimal until live data is available.
+            </p>
+          </div>
+        </section>
+        <Footer />
+      </>
+    )
+  }
+
   const liveViewers =
     safeProducts.reduce((acc, product) => acc + (product.liveViewers ?? 0), 0) || 32
   const soldLastHour =

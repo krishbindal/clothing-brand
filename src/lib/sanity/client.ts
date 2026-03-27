@@ -42,7 +42,7 @@ export async function fetchSanityData<T>(
 
   if (!hasEnvConfig) {
     if (!hasWarnedMissingEnv) {
-      console.warn('Sanity env vars missing; serving luxe demo content.')
+      console.warn('Sanity env vars missing; returning fallback data.')
       hasWarnedMissingEnv = true
     }
     return fallback
