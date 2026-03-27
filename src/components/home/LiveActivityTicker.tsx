@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Activity, Flame, Sparkles } from 'lucide-react'
-import { liveCities } from '@/lib/demoContent'
+import { liveCities, luxeActivityHeadlines } from '@/lib/liveSignals'
 import { Product } from '@/types'
 
 interface LiveActivityTickerProps {
@@ -13,13 +13,13 @@ interface LiveActivityTickerProps {
 
 export default function LiveActivityTicker({ anchor = 'Worldwide', products = [] }: LiveActivityTickerProps) {
   const [index, setIndex] = useState(0)
-  const [livePurchase, setLivePurchase] = useState('Someone from Delhi just bought a new drop')
+  const [livePurchase, setLivePurchase] = useState('Someone from Delhi just joined early access')
   const productNames = useMemo(() => {
     if (products.length) return products.map((product) => product.name)
-    return ['Aether Bomber', 'Seraph Overshirt', 'Obsidian Coat', 'Ion Knit Set']
+    return ['a limited silhouette', 'the next drop', 'a bespoke piece', 'the atelier queue']
   }, [products])
   const metrics = useMemo(() => {
-    if (!products.length) return { viewers: 12, sold: 5 }
+    if (!products.length) return { viewers: 128, sold: 18 }
     const viewers = products.reduce((acc, product) => acc + (product.liveViewers ?? 0), 0) || 12
     const sold =
       products.reduce(
@@ -34,22 +34,29 @@ export default function LiveActivityTicker({ anchor = 'Worldwide', products = []
     const updatePurchase = () => {
       const city = liveCities[Math.floor(Math.random() * liveCities.length)]
       const item = productNames[Math.floor(Math.random() * productNames.length)]
-      setLivePurchase(`Someone from ${city} just bought ${item}`)
+      setLivePurchase(`Someone from ${city} just locked ${item}`)
     }
 
     updatePurchase()
-    const interval = setInterval(updatePurchase, 7200)
+    const interval = setInterval(updatePurchase, 6400)
     return () => clearInterval(interval)
   }, [productNames])
 
-  const events = useMemo(
-    () => [
-      { icon: <Flame size={14} />, message: `🔥 ${metrics.viewers} people viewing this piece now`, meta: 'Live heat', tone: 'text-amber-200' },
-      { icon: <Activity size={14} />, message: `${metrics.sold} sold in the last hour — limited sizing`, meta: anchor, tone: 'text-green-200' },
+  const events = useMemo(() => {
+    const headlined = luxeActivityHeadlines.map((headline) => ({
+      icon: <Sparkles size={14} />,
+      message: `${headline.emoji} ${headline.message}`,
+      meta: headline.context,
+      tone: 'text-brand-gold',
+    }))
+
+    return [
+      { icon: <Flame size={14} />, message: `🔥 ${metrics.viewers} people browsing`, meta: 'High demand', tone: 'text-amber-200' },
+      { icon: <Activity size={14} />, message: `${metrics.sold} checkouts in the last hour`, meta: anchor, tone: 'text-green-200' },
       { icon: <Sparkles size={14} />, message: livePurchase, meta: 'Drop radar', tone: 'text-brand-gold' },
-    ],
-    [anchor, livePurchase, metrics.sold, metrics.viewers],
-  )
+      ...headlined,
+    ]
+  }, [anchor, livePurchase, metrics.sold, metrics.viewers])
 
   useEffect(() => {
     const interval = setInterval(() => {

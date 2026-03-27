@@ -10,6 +10,8 @@ import { Toaster } from '@/components/ui/Toaster'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import PageTransition from '@/components/layout/PageTransition'
 import LiveConversionFeed from '@/components/engagement/LiveConversionFeed'
+import PremiumLoader from '@/components/layout/PremiumLoader'
+import GoldenCursor from '@/components/ui/GoldenCursor'
 
 export const metadata: Metadata = {
   title: {
@@ -51,6 +53,8 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <LenisProvider>
+                <PremiumLoader />
+                <GoldenCursor />
                 <Navbar />
                 <PageTransition>
                   <main>{children}</main>

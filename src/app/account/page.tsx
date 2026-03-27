@@ -10,7 +10,6 @@ import { useProducts } from '@/hooks'
 import { Order } from '@/types'
 import { formatDate, formatPrice } from '@/lib/utils'
 import ProductCard from '@/components/shop/ProductCard'
-import { getDemoOrders } from '@/lib/demoContent'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -26,21 +25,18 @@ export default function AccountPage() {
       return
     }
 
-    const loadOrders = async () => {
+    void (async () => {
       try {
         const res = await fetch(`/api/orders?userId=${user.uid}&limit=3`)
         const data = (await res.json()) as { orders?: Order[] }
-        const fallback = getDemoOrders(user.uid)
-        setOrders(data.orders && data.orders.length ? data.orders : fallback)
+        setOrders(data.orders || [])
       } catch (error) {
         console.error('Failed to load orders', error)
-        setOrders(getDemoOrders(user.uid))
+        setOrders([])
       } finally {
         setIsLoading(false)
       }
-    }
-
-    void loadOrders()
+    })()
   }, [loading, router, user])
 
   if (!loading && !user) {
@@ -114,6 +110,12 @@ export default function AccountPage() {
               >
                 Billing
               </Link>
+              <Link
+                href="/account/security"
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                Security
+              </Link>
               <button
                 onClick={() => void logout()}
                 className="btn-secondary inline-flex items-center gap-2"
@@ -159,8 +161,12 @@ export default function AccountPage() {
             )}
 
             {!isLoading && orders.length === 0 && (
-              <div className="rounded-lg border border-brand-border/60 bg-brand-card/50 p-5 text-brand-gray-400">
-                No orders yet. Your next drop awaits.
+              <div className="rounded-lg border border-brand-border/60 bg-brand-card/50 p-5 text-brand-gray-400 space-y-3">
+                <p>No orders yet. Your next drop awaits.</p>
+                <Link href="/shop" className="btn-primary inline-flex items-center gap-2">
+                  Start Shopping
+                  <ArrowRight size={16} />
+                </Link>
               </div>
             )}
 

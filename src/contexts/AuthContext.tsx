@@ -27,6 +27,7 @@ export interface AuthUser {
   email: string | null
   name?: string | null
   photoURL?: string | null
+  lastLogin?: string | null
 }
 
 interface AuthContextType {
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: firebaseUser.email,
         name: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
+        lastLogin: firebaseUser.metadata?.lastSignInTime ?? null,
       })
       setLoading(false)
     })
